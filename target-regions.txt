@@ -1,0 +1,4 @@
+GCP	us-west1
+AZURE	southeastasia
+AZURE	northeurope
+AZURE	eastasia

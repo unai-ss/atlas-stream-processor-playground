@@ -1,0 +1,4 @@
+.env
+readiness-evidence/
+*.png
+.DS_Store
