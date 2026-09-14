@@ -1,8 +1,19 @@
-# Atlas Stream Processor Playground
+# Atlas Stream Processing Playground
 
-A standalone sandbox for experimenting with MongoDB Atlas Stream Processing workspace, connection, processor, and sink configurations.
+Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada referencia.
 
-This playground is intentionally separate from the regional readiness assessment. It is designed for controlled experiments, API payload validation, processor lifecycle testing, and sink troubleshooting.
+| Proyecto | Autor |
+|---|---|
+| [Fast start with Sample source](projects/01-fast-start) | Kenny Gorman |
+| [Taco delivery tracking](projects/02-taco-tracking) | Kenny Gorman |
+| [Ruuvi motion aggregation](projects/03-ruuvi-motion) | Kenny Gorman |
+| [Sensor join with late data repair](projects/04-late-data-join) | Joseph Niemiec |
+| [IP traffic HTTP enrichment](projects/05-http-enrichment) | Kenny Gorman |
+| [MongoDB CDC to Kinesis](projects/06-cdc-to-kinesis) | Igor Alekseev / MongoDB |
+
+Cada carpeta contiene un laboratorio y un processor JavaScript para ejecutar en la
+consola de un Stream Processing Instance. Son adaptaciones educativas de los
+artículos enlazados, no copias oficiales de sus autores.
 
 ## Safety Rules
 
@@ -24,6 +35,8 @@ mongosh --version
 ```
 
 The required Atlas permissions include the ability to manage Stream Processing workspaces, connections, and processors, plus database permissions to create and query the test sink collection.
+
+For the complete CLI workflow, see [ASP_OPERATIONS_GUIDE.md](ASP_OPERATIONS_GUIDE.md). It covers workspace creation, connections, time-series sink preparation, processor lifecycle, operational logs, validation, and cleanup.
 
 ## Initial Experiment Scope
 
