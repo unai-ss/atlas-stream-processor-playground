@@ -1,0 +1,42 @@
+{
+  "id": "00-assessment",
+  "name": "Automated playground assessment",
+  "levels": {
+    "core": [
+      {
+        "scenario": "01-fast-start",
+        "assertions": ["ASP-01-STATE", "ASP-01-OUTPUT"]
+      },
+      {
+        "scenario": "02-taco-tracking",
+        "assertions": ["ASP-02-STATE", "ASP-02-LATEST"]
+      },
+      {
+        "scenario": "03-ruuvi-motion",
+        "assertions": ["ASP-03-STATE", "ASP-03-WINDOW-MAX"]
+      }
+    ],
+    "integrations": [
+      {
+        "scenario": "04-late-data-join",
+        "adapter": "controlled-kafka",
+        "assertions": ["ASP-04-LATE-DATA", "ASP-04-DLQ-REPAIR"]
+      },
+      {
+        "scenario": "05-http-enrichment",
+        "adapter": "local-http-fixture",
+        "assertions": ["ASP-05-REQUEST", "ASP-05-ENRICHMENT"]
+      },
+      {
+        "scenario": "06-cdc-to-kinesis",
+        "adapter": "kinesis-sink-fixture",
+        "assertions": ["ASP-06-FLATTENED-EVENT", "ASP-06-PARTITION-KEY"]
+      }
+    ]
+  },
+  "defaults": {
+    "cleanup": true,
+    "interactive": false,
+    "redactEvidence": true
+  }
+}

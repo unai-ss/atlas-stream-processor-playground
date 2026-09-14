@@ -14,6 +14,8 @@ jq --version
 mongosh --version
 ```
 
+Use `mongosh` version 2.0 or later for the Stream Processing shell helpers.
+
 Authenticate the Atlas CLI:
 
 ```bash
@@ -42,7 +44,7 @@ export ATLAS_ORG="<atlas-organization-id>"
 export TIER="SP2"
 export MAX_TIER="SP2"
 export DATABASE_NAME="playground"
-export COLLECTION_NAME="stream_events"
+export COLLECTION_NAME="fast_start_events"
 export EVIDENCE_ROOT="readiness-evidence"
 export CLEANUP="true"
 ```
@@ -129,7 +131,9 @@ jq '{name, groupId, dataProcessRegion, streamConfig}' \
 
 ## 4. Create the Source Connection
 
-Create a Sample source connection:
+The default Stream Processing Workspace includes the `sample_stream_solar`
+connection. Check the connection registry before creating it. Only create the
+connection below if it is missing:
 
 ```bash
 jq -n \
@@ -157,13 +161,14 @@ The connection should report state `READY`.
 
 ## 5. Create the Atlas Sink Connection
 
-Create an Atlas cluster connection:
+Create an Atlas cluster connection named `atlas_lab`. This is the connection
+name used by laboratory 01 and by the processor definition below.
 
 ```bash
 jq -n \
   --arg cluster "$CLUSTER_NAME" \
   '{
-    name:"readiness-atlas",
+    name:"atlas_lab",
     type:"Cluster",
     clusterName:$cluster,
     dbRoleToExecute:{role:"atlasAdmin",type:"BUILT_IN"}
@@ -211,15 +216,17 @@ mongosh "$ATLAS_URI" --quiet --eval \
    });'
 ```
 
-Expected namespace:
+The expected namespace for laboratory 01 is:
 
 ```text
-playground.stream_events
+playground.fast_start_events
 ```
 
 ## 7. Create the Stream Processor
 
-The timestamp normalization is required because Sample messages may not contain a valid date timestamp. Use `$dateFromString` as the fallback. Do not use `$$NOW` in this playground processor.
+The timestamp normalization preserves valid BSON dates and converts valid ISO
+timestamp strings. It uses `$dateFromString` only as a fallback for missing or
+invalid timestamps. Do not use `$$NOW` in this playground processor.
 
 Generate the processor definition:
 
@@ -237,12 +244,16 @@ jq -n \
           "$cond":[
             {"$eq":[{"$type":"$timestamp"},"date"]},
             "$timestamp",
-            {"$dateFromString":{dateString:"2026-09-11T00:00:00Z"}}
+            {"$dateFromString":{
+                "dateString":"$timestamp",
+                "onError":{"$dateFromString":{"dateString":"2026-09-11T00:00:00Z"}},
+                "onNull":{"$dateFromString":{"dateString":"2026-09-11T00:00:00Z"}}
+            }}
           ]
         }
       }},
       {"$emit":{
-        connectionName:"readiness-atlas",
+        connectionName:"atlas_lab",
         db:$db,
         coll:$coll,
         timeseries:{timeField:"timestamp"}
@@ -413,7 +424,7 @@ atlas api streams deleteStreamConnection \
   --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
-  --connectionName "readiness-atlas" \
+  --connectionName "atlas_lab" \
   --output json
 
 atlas api streams deleteStreamWorkspace \

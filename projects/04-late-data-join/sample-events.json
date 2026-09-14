@@ -1,0 +1,6 @@
+[
+  { "sensorIdGroup": 1, "humidity": 100, "timestamp": "2026-09-11T20:00:00.000Z" },
+  { "sensorIdGroup": 1, "temperature": 70, "timestamp": "2026-09-11T20:00:01.000Z" },
+  { "sensorIdGroup": 3, "temperature": 20, "timestamp": "2026-09-11T20:00:03.000Z" },
+  { "sensorIdGroup": 3, "humidity": 55, "timestamp": "2026-09-11T19:59:50.000Z" }
+]

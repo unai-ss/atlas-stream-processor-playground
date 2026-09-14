@@ -4,6 +4,7 @@ Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada r
 
 | Proyecto | Autor |
 |---|---|
+| [Automated playground assessment](projects/00-assessment) | MongoDB playground |
 | [Fast start with Sample source](projects/01-fast-start) | Kenny Gorman |
 | [Taco delivery tracking](projects/02-taco-tracking) | Kenny Gorman |
 | [Ruuvi motion aggregation](projects/03-ruuvi-motion) | Kenny Gorman |
@@ -37,6 +38,8 @@ mongosh --version
 The required Atlas permissions include the ability to manage Stream Processing workspaces, connections, and processors, plus database permissions to create and query the test sink collection.
 
 For the complete CLI workflow, see [ASP_OPERATIONS_GUIDE.md](ASP_OPERATIONS_GUIDE.md). It covers workspace creation, connections, time-series sink preparation, processor lifecycle, operational logs, validation, and cleanup.
+
+Known limitations and the recommended work order are tracked in [LIMITATIONS.md](LIMITATIONS.md).
 
 ## Initial Experiment Scope
 
