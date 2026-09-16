@@ -11,6 +11,7 @@ Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada r
 | [Sensor join with late data repair](projects/04-late-data-join) | Joseph Niemiec |
 | [IP traffic HTTP enrichment](projects/05-http-enrichment) | Kenny Gorman |
 | [MongoDB CDC to Kinesis](projects/06-cdc-to-kinesis) | Igor Alekseev / MongoDB |
+| [Observability and troubleshooting](projects/07-metrics-observability) | MongoDB playground |
 
 Cada carpeta contiene un laboratorio y un processor JavaScript para ejecutar en la
 consola de un Stream Processing Instance. Son adaptaciones educativas de los
