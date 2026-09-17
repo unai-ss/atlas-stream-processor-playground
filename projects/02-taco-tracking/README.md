@@ -22,12 +22,6 @@ ultima posicion conocida de cada entrega.
 - `$merge` para mantener una vista por `delivery_id`.
 
 ## Arquitectura
-
-```text
-playground.taco_events
-		-> Change Stream
-		-> $match
-		-> $replaceRoot
 		-> ventana de 1 minuto
 		-> $group por delivery_id
 		-> $top por timestamp
@@ -47,10 +41,6 @@ Necesitas:
 `$merge` puede crear `playground.taco_locations` durante la primera ventana.
 
 ## Paso 1: generar eventos
-
-Conectado al cluster Atlas, crea dos entregas:
-
-```javascript
 use playground
 
 db.taco_events.insertOne({
