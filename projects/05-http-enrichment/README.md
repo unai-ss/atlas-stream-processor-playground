@@ -11,10 +11,16 @@ y guarda en Atlas la informacion geografica devuelta para cada IP.
 
 Registra una conexion HTTPS llamada `ipinfo` con base URL `https://ipinfo.io/`. Si usas token, configuralo como secreto en el Connection Registry. El laboratorio usa IPs de documentacion y genera los eventos con `$source.documents`.
 
+Para consultar la salida en el cluster Atlas, conecta con:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
 ## Ejecucion
 
 ```javascript
-load('projects/05-http-enrichment/processor.js')
+load('[local-repository]/projects/05-http-enrichment/processor.js')
 sp.labHttpEnrichment.start()
 sp.labHttpEnrichment.stats()
 ```

@@ -11,10 +11,16 @@ lateness controlada, y repara resultados tardios mediante una coleccion DLQ.
 
 Registra una conexion Kafka llamada `kafka_lab` con los topics `temperature` y `humidity`. Registra `atlas_lab` y crea las colecciones `playground.sensor_weather` y `playground.sensor_dlq`.
 
+Cuando necesites consultar esas colecciones en el cluster Atlas, usa:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
 ## Ejecucion
 
 ```javascript
-load('projects/04-late-data-join/processor.js')
+load('[local-repository]/projects/04-late-data-join/processor.js')
 sp.sensorJoins.start()
 sp.sensorDLQUpdater.start()
 sp.sensorJoins.stats()

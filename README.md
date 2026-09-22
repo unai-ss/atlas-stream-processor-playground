@@ -12,6 +12,7 @@ Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada r
 | [IP traffic HTTP enrichment](projects/05-http-enrichment) | Kenny Gorman |
 | [MongoDB CDC to Kinesis](projects/06-cdc-to-kinesis) | Igor Alekseev / MongoDB |
 | [Observability and troubleshooting](projects/07-metrics-observability) | MongoDB playground |
+| [Parallelism across ETL](projects/08-parallelism) | MongoDB playground |
 
 Cada carpeta contiene un laboratorio y un processor JavaScript para ejecutar en la
 consola de un Stream Processing Instance. Son adaptaciones educativas de los
@@ -92,11 +93,12 @@ STOPPED -> update -> STARTED
 
 ## API Version Note
 
-The readiness work showed that Azure `northeurope` and `eastasia` required the `2025-02-19` Create Stream Workspace API version. Pin the API version when testing those regions:
+Use the API version selected by the installed Atlas CLI when creating Stream
+Processing workspaces. Do not copy a version pin from an older CLI example;
+the CLI may reject it and fall back to another version.
 
 ```bash
 atlas api streams createStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --file readiness-evidence/workspace.json \
   --output json

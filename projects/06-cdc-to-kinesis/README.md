@@ -13,12 +13,19 @@ y los publica en Kinesis usando `device_id` como clave de particion.
 2. Crea un stream Kinesis y una conexion Atlas llamada `kinesis_lab` con region, stream y role IAM configurados.
 3. Inserta documentos en `playground.device_events` con `device_id`, `timestamp` y `obs.watts` / `obs.temp`.
 
+Para insertar los documentos en el cluster Atlas, abre `mongosh` usando la URI
+que ya contiene las credenciales de `stream[redacted]`:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
 El laboratorio solo crea el processor de Atlas. La configuracion IAM, Kinesis y Redshift debe hacerse fuera de este repositorio y nunca debe contener credenciales en archivos.
 
 ## Ejecucion
 
 ```javascript
-load('projects/06-cdc-to-kinesis/processor.js')
+load('[local-repository]/projects/06-cdc-to-kinesis/processor.js')
 sp.labCdcKinesis.start()
 sp.labCdcKinesis.stats()
 ```

@@ -4,7 +4,7 @@ const pipeline = [
       connectionName: "atlas_lab",
       db: "playground",
       coll: "taco_events",
-      config: { fullDocument: "whenAvailable" }
+      config: { fullDocument: "updateLookup" }
     }
   },
   {
@@ -16,6 +16,12 @@ const pipeline = [
   {
     $replaceRoot: {
       newRoot: "$fullDocument"
+    }
+  },
+  {
+    $match: {
+      delivery_id: { $type: "string" },
+      timestamp: { $type: "date" }
     }
   },
   {

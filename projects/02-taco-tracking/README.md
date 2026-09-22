@@ -15,7 +15,8 @@ ultima posicion conocida de cada entrega.
 ## Conceptos ASP
 
 - `$source` con una conexion Atlas y Change Streams;
-- `fullDocument: "whenAvailable"`;
+- `fullDocument: "updateLookup"` para recuperar el documento posterior en
+	eventos `update`;
 - filtrado de operaciones `insert`, `update` y `replace`;
 - ventanas `$tumblingWindow`;
 - seleccion del evento mas reciente con `$top`;
@@ -37,6 +38,19 @@ Necesitas:
 - un cluster Atlas de pruebas;
 - acceso al workspace y al cluster con `mongosh`;
 - la coleccion `playground.taco_events`.
+
+Para conectarte al cluster Atlas usa la URI completa, que incluye las
+credenciales de `stream[redacted]`:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
+Para conectarte al workspace ASP usa su hostname `ASP_HOST`; es un endpoint
+distinto del cluster Atlas.
+Antes de crear el cluster, sigue el [manual operativo del laboratorio](MANUAL.md)
+desde el paso 0. El manual lista todos los clusters del proyecto, no solo
+`Cluster0`, y pide confirmacion explicita antes de borrarlos.
 
 `$merge` puede crear `playground.taco_locations` durante la primera ventana.
 
@@ -72,7 +86,7 @@ sp.process([
 			connectionName: "atlas_lab",
 			db: "playground",
 			coll: "taco_events",
-			config: { fullDocument: "whenAvailable" }
+			config: { fullDocument: "updateLookup" }
 		}
 	}
 ])
@@ -86,7 +100,7 @@ Mientras el comando esta activo, inserta otro evento y observa su
 Conecta de nuevo al workspace ASP y carga el processor:
 
 ```javascript
-load("projects/02-taco-tracking/processor.js")
+load("[local-repository]/projects/02-taco-tracking/processor.js")
 sp.labTacoTracking.start()
 sp.labTacoTracking.stats()
 sp.labTacoTracking.sample()
@@ -94,6 +108,11 @@ sp.labTacoTracking.sample()
 
 El processor agrupa cada minuto y conserva, para cada `delivery_id`, el evento
 con el timestamp mas reciente dentro de la ventana.
+
+Al recrear un processor, los eventos anteriores a su inicio no se reprocesan.
+Usa eventos nuevos para la prueba. La ventana se emite cuando el watermark
+avanza a una ventana posterior; si no hay eventos posteriores, la salida puede
+seguir mostrando el estado de la ventana anterior.
 
 ## Paso 4: cambiar una entrega
 
@@ -111,6 +130,19 @@ db.taco_events.updateOne(
 	}
 )
 ```
+
+Cuando haya comenzado el minuto siguiente, genera un evento posterior para
+avanzar el watermark:
+
+```javascript
+db.taco_events.updateOne(
+	{ delivery_id: "taco-002" },
+	{ $set: { timestamp: new Date() } }
+)
+```
+
+Los documentos sin `delivery_id` o sin `timestamp` de tipo fecha se descartan
+para evitar una salida con `_id: null`.
 
 Tras cerrar la ventana de un minuto, consulta la vista:
 

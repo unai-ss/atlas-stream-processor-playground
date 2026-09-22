@@ -49,8 +49,14 @@ Las lecturas y la vista viven en el mismo cluster Atlas, dentro de la base
 `playground`. Para generar varias lecturas sin hardware, conecta `mongosh` al
 cluster Atlas y ejecuta:
 
+```bash
+mongosh "$ATLAS_URI"
+```
+
+En esa sesion ejecuta:
+
 ```javascript
-load("scripts/03-seed-ruuvi.js")
+load("[local-repository]/scripts/03-seed-ruuvi.js")
 ```
 
 El seeder inserta seis lecturas de dos sensores, una por segundo. Ejecutalo
@@ -61,7 +67,7 @@ despues de iniciar el processor para que los cambios entren en el Change Stream.
 En otra sesion, conecta `mongosh` al workspace ASP y ejecuta:
 
 ```javascript
-load('projects/03-ruuvi-motion/processor.js')
+load('[local-repository]/projects/03-ruuvi-motion/processor.js')
 sp.labRuuviMotion.start()
 sp.labRuuviMotion.stats()
 ```
@@ -69,7 +75,7 @@ sp.labRuuviMotion.stats()
 Despues vuelve a la sesion del cluster Atlas y ejecuta el seeder:
 
 ```javascript
-load("scripts/03-seed-ruuvi.js")
+load("[local-repository]/scripts/03-seed-ruuvi.js")
 ```
 
 El resultado queda materializado en `playground.ruuvi_motion` como un documento

@@ -48,6 +48,16 @@ Necesitas:
 - la coleccion `playground.fast_start_events` preparada como time-series con
 	`timestamp` como `timeField`.
 
+Para consultar el cluster Atlas, usa la URI que ya contiene las credenciales de
+`stream[redacted]`:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
+La conexion al workspace ASP usa su hostname y se mantiene separada de
+`ATLAS_URI`.
+
 El primer paso no requiere cargar el archivo `processor.js`.
 
 ## Paso 1: observar la fuente
@@ -85,7 +95,7 @@ workspace y no crea recursos persistentes.
 Carga la definicion desde `mongosh` conectado al workspace:
 
 ```javascript
-load("projects/01-fast-start/processor.js")
+load("[local-repository]/projects/01-fast-start/processor.js")
 ```
 
 El archivo crea `labFastStart` con estas etapas:

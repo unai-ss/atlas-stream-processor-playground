@@ -55,6 +55,14 @@ Necesitas:
 - acceso al cluster Atlas con `mongosh`;
 - las colecciones `playground.metrics_input` y `playground.metrics_output`.
 
+Para trabajar con las colecciones del cluster Atlas, conecta con:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
+La conexión al workspace ASP es independiente y se realiza con su hostname.
+
 `metrics_output` puede ser creada por `$merge` en la primera escritura.
 
 ## Paso 1: arrancar el processor sin trafico
@@ -62,7 +70,7 @@ Necesitas:
 En `mongosh` conectado al workspace ASP:
 
 ```javascript
-load("projects/07-metrics-observability/processor.js")
+load("[local-repository]/projects/07-metrics-observability/processor.js")
 sp.listStreamProcessors()
 sp.labMetricsObservability.start()
 sp.labMetricsObservability.stats()
@@ -76,7 +84,7 @@ nuevos, no esperes salida en `metrics_output`.
 En otra sesion `mongosh` conectada al cluster Atlas:
 
 ```javascript
-load("scripts/07-seed-metrics.js")
+load("[local-repository]/scripts/07-seed-metrics.js")
 ```
 
 El seeder inserta seis eventos en `playground.metrics_input`: cuatro validos y

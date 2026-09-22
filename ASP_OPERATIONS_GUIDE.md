@@ -23,7 +23,7 @@ atlas auth login
 atlas projects list
 ```
 
-The account must have permissions to manage Stream Processing workspaces, connections, and processors. The database user in `ATLAS_URI` must be able to create and query the test sink collection.
+The account must have permissions to manage Stream Processing workspaces, connections, and processors. The database user in `ATLAS_URI` must have at least the `readWrite` role on the test database so it can create, update, and query the test sink collection. The `dbRoleToExecute` role on an ASP connection is separate from the database user's own roles.
 
 ## 2. Local Configuration
 
@@ -103,11 +103,11 @@ jq -n \
   }' > "$EVIDENCE_DIR/workspace.json"
 ```
 
-Create the workspace. Pin API version `2025-02-19` for the Azure regions that require it:
+Create the workspace using the API version selected by your installed Atlas CLI.
+Do not force `2025-02-19` unless `atlas api` reports that your CLI supports it.
 
 ```bash
 atlas api streams createStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --file "$EVIDENCE_DIR/workspace.json" \
   --output json > "$EVIDENCE_DIR/workspace-created.json"
@@ -141,7 +141,6 @@ jq -n \
   > "$EVIDENCE_DIR/sample-connection.json"
 
 atlas api streams createStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/sample-connection.json" \
@@ -175,7 +174,6 @@ jq -n \
   }' > "$EVIDENCE_DIR/atlas-connection.json"
 
 atlas api streams createStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/atlas-connection.json" \
@@ -266,7 +264,6 @@ Create the processor:
 
 ```bash
 atlas api streams createStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/processor.json" \
@@ -279,7 +276,6 @@ Start the processor:
 
 ```bash
 atlas api streams startStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -290,7 +286,6 @@ Save and inspect its status:
 
 ```bash
 atlas api streams getStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -324,14 +319,12 @@ A running processor cannot be modified. Stop it first and verify the lifecycle s
 
 ```bash
 atlas api streams stopStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
   --output json > "$EVIDENCE_DIR/processor-stop.json"
 
 atlas api streams getStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -348,7 +341,6 @@ Update and restart:
 
 ```bash
 atlas api streams updateStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -356,7 +348,6 @@ atlas api streams updateStreamProcessor \
   --output json > "$EVIDENCE_DIR/processor-updated.json"
 
 atlas api streams startStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -400,35 +391,30 @@ Stop and delete the processor, connections, and workspace after the test:
 
 ```bash
 atlas api streams stopStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
   --output json
 
 atlas api streams deleteStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
   --output json
 
 atlas api streams deleteStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --connectionName "sample_stream_solar" \
   --output json
 
 atlas api streams deleteStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --connectionName "atlas_lab" \
   --output json
 
 atlas api streams deleteStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --output json
@@ -449,7 +435,7 @@ A non-zero response after deletion is expected. Keep the local evidence director
 
 | Symptom | Likely cause | Action |
 |---|---|---|
-| `INVALID_JSON_ATTRIBUTE` for `dataProcessRegion` | Unsupported API version or region exposure | Pin `2025-02-19` and use the literal cloud region value |
+| `INVALID_JSON_ATTRIBUTE` for `dataProcessRegion` | Unsupported API version or region exposure | Use the CLI default version and the literal cloud region value |
 | Processor reaches `STARTED` but output is zero | Sink configuration, collection type, or pipeline error | Inspect processor stats and operational logs |
 | Messages go to the DLQ in `$set` | Unsupported expression or invalid timestamp | Use the tested `$dateFromString` fallback |
 | `$emit` rejects the sink | Collection is missing or is not time series | Create the collection with `timestamp` as `timeField` |

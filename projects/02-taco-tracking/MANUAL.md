@@ -8,6 +8,15 @@ El laboratorio transforma cambios de `playground.taco_events` en una vista
 materializada `playground.taco_locations`, conservando el evento mas reciente
 por `delivery_id` dentro de una ventana de un minuto.
 
+El `$source` usa `fullDocument: "updateLookup"` para incluir el documento
+posterior en los eventos `update`. Con `whenAvailable`, un `update` puede no
+incluir `fullDocument`, ser descartado por el `$match` y dejar la vista con el
+estado anterior.
+
+El pipeline tambien exige `delivery_id` de tipo string y `timestamp` de tipo
+fecha. Esto evita que comprobaciones auxiliares u otros documentos sin la forma
+de una entrega creen una salida con `_id: null`.
+
 No ejecutes este laboratorio contra produccion. No guardes contrasenas, URIs
 completas ni evidencias sin redactar en GitHub.
 
@@ -22,7 +31,8 @@ completas ni evidencias sin redactar en GitHub.
 | ASP workspace | `asp-lab02-gcp-us-west1` |
 | ASP tier | `SP2` |
 | Atlas connection | `atlas_lab` |
-| MongoDB user | `[redacted]` |
+| Atlas CLI user | `[redacted]` |
+| MongoDB user | `stream[redacted]` |
 | Processor | `labTacoTracking` |
 | Input namespace | `playground.taco_events` |
 | Output namespace | `playground.taco_locations` |
@@ -65,20 +75,66 @@ Si el login ha caducado:
 atlas auth login
 ```
 
-El login del Atlas CLI y el usuario de `mongosh` son identidades distintas. El
-usuario MongoDB usado en este manual es `[redacted]`.
+El login de Atlas CLI y el usuario de `mongosh` son identidades distintas:
 
-## Paso 1: crear o validar `Cluster0`
+- `[redacted]` es la cuenta de Atlas CLI para gestionar el proyecto, el
+  cluster y el workspace ASP.
+- `stream[redacted]` es el usuario de base de datos, autenticado con contraseña para
+  `mongosh` y para la conexión `atlas_lab`.
 
-Comprueba si existe:
+## Paso 1: comprobar y preparar los clusters
+
+Antes de crear recursos, comprueba todos los clusters del proyecto. No uses
+`atlas clusters describe "Cluster0"` como unica comprobacion: `Cluster0` puede
+no existir aunque haya otro cluster en el proyecto.
 
 ```bash
-atlas clusters describe "$CLUSTER_NAME" \
+CLUSTERS_JSON="$(atlas clusters list \
   --projectId "$PROJECT_ID" \
-  --output json | jq -r '.name, .stateName, .providerSettings.instanceSizeName'
+  --output json)"
+
+CLUSTER_COUNT="$(printf '%s' "$CLUSTERS_JSON" | jq '.results // [] | length')"
+
+if [[ "$CLUSTER_COUNT" -gt 0 ]]; then
+  printf '%s\n' "Clusters encontrados en el proyecto:"
+  printf '%s\n' "$CLUSTERS_JSON" | jq -r \
+    '.results[]? | [.name, .stateName, .providerSettings.instanceSizeName] | @tsv'
+
+  printf '%s\n' "Estos clusters pueden contener datos. No los borres si no son del laboratorio."
+  printf '%s' "Borrar TODOS los clusters encontrados para empezar desde cero? (si/no): "
+  read -r DELETE_CLUSTERS
+
+  if [[ "$DELETE_CLUSTERS" == "si" ]]; then
+    while IFS= read -r EXISTING_CLUSTER; do
+      [[ -z "$EXISTING_CLUSTER" ]] && continue
+      atlas clusters delete "$EXISTING_CLUSTER" \
+        --projectId "$PROJECT_ID" \
+        --force \
+        --watch
+    done < <(printf '%s\n' "$CLUSTERS_JSON" | jq -r '.results[]?.name')
+  else
+    printf '%s\n' "No se borro ningun cluster. Deten el laboratorio y revisa el proyecto antes de continuar."
+  fi
+else
+  printf '%s\n' "No hay clusters en el proyecto."
+fi
 ```
 
-Si no existe, crea un M0:
+Si respondes `no`, no ejecutes el paso siguiente. Si respondes `si`, verifica
+que la lista quede vacia antes de crear el cluster:
+
+```bash
+atlas clusters list \
+  --projectId "$PROJECT_ID" \
+  --output json | jq -r '.results[]? | [.name, .stateName] | @tsv'
+```
+
+La salida debe estar vacia. Si aparece algun cluster, espera a que termine su
+eliminacion o detente y revisa el nombre antes de continuar.
+
+## Paso 2: crear `Cluster0`
+
+Cuando no quede ningun cluster, crea un M0:
 
 ```bash
 atlas clusters create "$CLUSTER_NAME" \
@@ -93,27 +149,33 @@ atlas clusters create "$CLUSTER_NAME" \
 El estado esperado es `IDLE`. Si `EU_WEST_1` no está disponible para M0, usa
 una región M0 indicada por el error del CLI.
 
-## Paso 2: validar usuario y conexión MongoDB
+## Paso 3: validar usuario y conexion MongoDB
 
 Comprueba que existe el usuario, sin mostrar la contraseña:
 
 ```bash
-atlas dbusers describe "[redacted]" \
+atlas dbusers describe "stream[redacted]" \
   --projectId "$PROJECT_ID" \
   --output json | jq '{username, databaseName, roles}'
 ```
 
+El usuario debe tener como minimo el rol `readWrite` sobre la base de datos
+`playground`. Si la salida no muestra ese rol, abre Atlas UI > Database Access,
+edita `stream[redacted]` y añade el rol integrado `readWrite` con `playground` como
+base de datos. Guarda el cambio y vuelve a conectar `mongosh`.
+
+El rol `atlasAdmin` de `dbRoleToExecute` en la conexion `atlas_lab` es
+independiente: autoriza al processor ASP y no cambia los permisos del usuario
+`stream[redacted]` cuando se conecta directamente al cluster.
+
 Conecta al cluster Atlas:
 
 ```bash
-mongosh "$ATLAS_URI" \
-  --username "[redacted]" \
-  --password \
-  --authenticationDatabase admin
+mongosh "$ATLAS_URI"
 ```
 
-Escribe la contraseña directamente cuando la terminal la solicite. Dentro de
-`mongosh`, comprueba la identidad:
+`ATLAS_URI` ya contiene las credenciales de `stream[redacted]`. Dentro de `mongosh`,
+comprueba la identidad:
 
 ```javascript
 db.runCommand({ connectionStatus: 1, showPrivileges: false })
@@ -122,7 +184,19 @@ db.runCommand({ connectionStatus: 1, showPrivileges: false })
 `authenticatedUsers` no debe estar vacío. Si aparece vacío, corrige la URI o
 la contraseña antes de continuar.
 
-## Paso 3: preparar `taco_events`
+Comprueba que la escritura funciona antes de arrancar el processor:
+
+```javascript
+db.runCommand({ connectionStatus: 1, showPrivileges: false })
+use playground
+db.taco_events.insertOne({ _permission_check: true, created_at: new Date() })
+db.taco_events.deleteOne({ _permission_check: true })
+```
+
+Si aparece `not allowed to do action [insert]` o `[update]`, detente y corrige
+el rol `readWrite`; no continúes con el experimento.
+
+## Paso 4: preparar `taco_events`
 
 En la sesión conectada al cluster Atlas:
 
@@ -137,7 +211,7 @@ Si la colección ya existe, continúa. `taco_locations` puede ser creada por
 Mantén esta sesión abierta. Se usará para insertar los eventos después de
 arrancar el processor.
 
-## Paso 4: crear el workspace ASP
+## Paso 5: crear el workspace ASP
 
 Desde la terminal del proyecto:
 
@@ -161,7 +235,6 @@ jq -n \
   }' > "$EVIDENCE_DIR/workspace.json"
 
 atlas api streams createStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --file "$EVIDENCE_DIR/workspace.json" \
   --output json > "$EVIDENCE_DIR/workspace-created.json"
@@ -171,13 +244,14 @@ Comprueba el workspace:
 
 ```bash
 atlas api streams getStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
-  --output json | jq '{name, dataProcessRegion, streamConfig, hostnames}'
+  --output json > "$EVIDENCE_DIR/workspace-status.json" && \
+jq '{name, dataProcessRegion, streamConfig, hostnames}' \
+  "$EVIDENCE_DIR/workspace-status.json"
 ```
 
-## Paso 5: crear `atlas_lab`
+## Paso 6: crear `atlas_lab`
 
 ```bash
 jq -n \
@@ -190,7 +264,6 @@ jq -n \
   }' > "$EVIDENCE_DIR/atlas-connection.json"
 
 atlas api streams createStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/atlas-connection.json" \
@@ -201,23 +274,22 @@ Comprueba la conexión:
 
 ```bash
 atlas api streams listStreamConnections \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --output json | jq '.connections // .results // .'
 ```
 
-## Paso 6: conectar al workspace ASP
+## Paso 7: conectar al workspace ASP
 
 Obtén el hostname:
 
 ```bash
 export ASP_HOST="$(
   atlas api streams getStreamWorkspace \
-    --version 2025-02-19 \
     --groupId "$PROJECT_ID" \
     --tenantName "$WORKSPACE" \
-    --output json | jq -r '.hostnames[0]'
+    --output json > "$EVIDENCE_DIR/workspace-status.json" && \
+  jq -r '.hostnames[0]' "$EVIDENCE_DIR/workspace-status.json"
 )"
 
 printf '[%s]\n' "$ASP_HOST"
@@ -231,7 +303,7 @@ En una segunda terminal, conecta al workspace ASP con el mismo usuario MongoDB:
 mongosh "mongodb://$ASP_HOST/" \
   --tls \
   --authenticationDatabase admin \
-  --username "[redacted]" \
+  --username "stream[redacted]" \
   --password
 ```
 
@@ -243,7 +315,18 @@ sp.listConnections()
 
 Debe aparecer `atlas_lab` apuntando a `Cluster0`.
 
-## Paso 7: crear y arrancar el processor
+## Paso 8: crear y arrancar el processor
+
+Si acabas de cambiar el processor, detenlo y eliminalo antes de volver a
+cargar el archivo:
+
+```javascript
+sp.labTacoTracking.stop()
+sp.labTacoTracking.drop()
+```
+
+Un processor nuevo comienza desde los eventos que lleguen despues de su
+inicio; no reprocesa automaticamente los eventos antiguos.
 
 En la sesión ASP carga el archivo una sola vez:
 
@@ -264,7 +347,7 @@ sp.labTacoTracking.stats()
 Si recibes `stream processor has already been started`, el processor ya está
 activo; continúa con el paso siguiente.
 
-## Paso 8: insertar eventos nuevos
+## Paso 9: insertar eventos nuevos
 
 Vuelve a la sesión del cluster Atlas y ejecuta:
 
@@ -289,7 +372,7 @@ db.taco_events.insertOne({
 Los eventos deben insertarse después de arrancar el processor. Los documentos
 anteriores no se reprocesan automáticamente por el Change Stream.
 
-## Paso 9: actualizar una entrega
+## Paso 10: actualizar una entrega
 
 ```javascript
 db.taco_events.updateOne(
@@ -306,10 +389,24 @@ db.taco_events.updateOne(
 
 La respuesta esperada incluye `matchedCount: 1` y `modifiedCount: 1`.
 
-## Paso 10: verificar la vista materializada
+Cuando haya comenzado el minuto siguiente, avanza el watermark con un evento
+posterior:
 
-El processor usa una ventana tumbling de un minuto. Espera aproximadamente 60
-segundos y consulta:
+```javascript
+db.taco_events.updateOne(
+  { delivery_id: "taco-002" },
+  { $set: { timestamp: new Date() } }
+)
+```
+
+La ventana tumbling puede no emitir inmediatamente al esperar 60 segundos: ASP
+necesita recibir un evento posterior para demostrar que la ventana anterior ha
+terminado. No uses timestamps futuros para forzarlo.
+
+## Paso 11: verificar la vista materializada
+
+El processor usa una ventana tumbling de un minuto. Tras avanzar el watermark,
+consulta:
 
 ```javascript
 db.taco_locations.find().sort({ _id: 1 }).pretty()
@@ -325,13 +422,17 @@ status: delivered
 updated_at: Date
 ```
 
+Si el processor se recreo durante la practica, prueba con eventos insertados
+despues de ese reinicio o limpia `taco_locations` antes de comparar resultados;
+la vista puede conservar documentos de una ejecucion anterior.
+
 En la sesión ASP puedes revisar actividad:
 
 ```javascript
 sp.labTacoTracking.stats()
 ```
 
-## Paso 11: limpiar el laboratorio
+## Paso 12: limpiar el laboratorio
 
 En la sesión ASP:
 
@@ -345,14 +446,12 @@ Si la sesión ASP ya está cerrada, usa la API:
 
 ```bash
 atlas api streams stopStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
   --output json
 
 atlas api streams deleteStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -371,14 +470,12 @@ Elimina la conexión y el workspace:
 
 ```bash
 atlas api streams deleteStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --connectionName "atlas_lab" \
   --output json
 
 atlas api streams deleteStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --output json

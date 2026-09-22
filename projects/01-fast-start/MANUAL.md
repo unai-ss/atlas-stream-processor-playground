@@ -116,6 +116,10 @@ atlas dbusers create atlasAdmin \
 unset DB_PASSWORD
 ```
 
+Para este laboratorio, `stream[redacted]` debe tener el rol `readWrite` sobre la
+base de datos `playground`. El usuario del Atlas CLI y el usuario de MongoDB
+son identidades distintas.
+
 Autoriza tu IP actual si el cluster no acepta conexiones desde tu maquina:
 
 ```bash
@@ -155,7 +159,6 @@ Crea el workspace:
 
 ```bash
 atlas api streams createStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --file "$EVIDENCE_DIR/workspace.json" \
   --output json > "$EVIDENCE_DIR/workspace-created.json"
@@ -165,10 +168,11 @@ Comprueba que existe:
 
 ```bash
 atlas api streams getStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
-  --output json | jq '{name, dataProcessRegion, streamConfig, hostnames}'
+  --output json > "$EVIDENCE_DIR/workspace-status.json" && \
+jq '{name, dataProcessRegion, streamConfig, hostnames}' \
+  "$EVIDENCE_DIR/workspace-status.json"
 ```
 
 ## Paso 4: comprobar la fuente Sample
@@ -177,7 +181,6 @@ Lista conexiones del workspace:
 
 ```bash
 atlas api streams listStreamConnections \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --output json | jq '.connections // .results // .'
@@ -190,7 +193,6 @@ jq -n '{name:"sample_stream_solar",type:"Sample"}' \
   > "$EVIDENCE_DIR/sample-connection.json"
 
 atlas api streams createStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/sample-connection.json" \
@@ -210,7 +212,6 @@ jq -n \
   }' > "$EVIDENCE_DIR/atlas-connection.json"
 
 atlas api streams createStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --file "$EVIDENCE_DIR/atlas-connection.json" \
@@ -246,10 +247,10 @@ Obtiene el host del workspace:
 ```bash
 export ASP_HOST="$(
   atlas api streams getStreamWorkspace \
-    --version 2025-02-19 \
     --groupId "$PROJECT_ID" \
     --tenantName "$WORKSPACE" \
-    --output json | jq -r '.hostnames[0]'
+    --output json > "$EVIDENCE_DIR/workspace-status.json" && \
+  jq -r '.hostnames[0]' "$EVIDENCE_DIR/workspace-status.json"
 )"
 
 printf '[%s]\n' "$ASP_HOST"
@@ -267,7 +268,8 @@ mongosh "mongodb://$ASP_HOST/" \
   --password
 ```
 
-Sustituye `stream[redacted]` si tu usuario de base de datos tiene otro nombre.
+El usuario de base de datos usado por este playground es `stream[redacted]`. La
+cuenta `[redacted]` se usa para autenticarse con Atlas CLI.
 Escribe la contrasena directamente en la terminal cuando `mongosh` la pida.
 
 ## Paso 8: validar que Sample emite datos
@@ -332,14 +334,12 @@ API en su lugar:
 
 ```bash
 atlas api streams stopStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
   --output json
 
 atlas api streams deleteStreamProcessor \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --processorName "$PROCESSOR" \
@@ -350,14 +350,12 @@ Despues elimina conexiones y workspace desde la terminal:
 
 ```bash
 atlas api streams deleteStreamConnection \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --connectionName "atlas_lab" \
   --output json
 
 atlas api streams deleteStreamWorkspace \
-  --version 2025-02-19 \
   --groupId "$PROJECT_ID" \
   --tenantName "$WORKSPACE" \
   --output json
