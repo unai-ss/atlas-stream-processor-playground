@@ -1,6 +1,28 @@
 # Atlas Stream Processing Playground
 
-Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada referencia.
+Educational Atlas Stream Processing playground with repeatable labs, operational
+guidance, and an automated assessment track.
+
+For the Spanish learning path and shared setup steps, see
+[LABS.md](LABS.md). For the complete CLI workflow, see
+[ASP_OPERATIONS_GUIDE.md](ASP_OPERATIONS_GUIDE.md).
+
+## Labs and Options
+
+Choose the path that matches the capability you want to practice:
+
+| Path | Labs | External services |
+|---|---|---|
+| ASP core | 01 Sample, 02 Change Streams, 03 Ruuvi | Atlas only |
+| Operations | 07 observability, 08 ETL parallelism | Atlas only |
+| Integrations | 04 late-data join, 05 HTTP enrichment, 06 CDC to Kinesis | Kafka, HTTP, or AWS as applicable |
+| Assessment | 00 automated playground assessment | Controlled fixtures and adapters |
+
+The labs can be run manually from `mongosh`, while laboratory 00 defines the
+contract for a non-interactive automated runner. Every lab has its own README;
+laboratories 01 and 02 also include a repeatable setup manual.
+
+## Project Catalog
 
 | Proyecto | Autor |
 |---|---|
@@ -14,9 +36,9 @@ Listado de ideas de proyectos de Atlas Stream Processing, con el autor de cada r
 | [Observability and troubleshooting](projects/07-metrics-observability) | MongoDB playground |
 | [Parallelism across ETL](projects/08-parallelism) | MongoDB playground |
 
-Cada carpeta contiene un laboratorio y un processor JavaScript para ejecutar en la
-consola de un Stream Processing Instance. Son adaptaciones educativas de los
-artículos enlazados, no copias oficiales de sus autores.
+Each folder contains a lab and a JavaScript processor to run in a Stream
+Processing Instance. These are educational adaptations, not official copies of
+the referenced authors' work.
 
 ## Safety Rules
 
@@ -53,6 +75,21 @@ The initial matrix is defined in `target-regions.txt`:
 - Azure `eastasia`
 
 GCP `asia-south1` is not included because it was unavailable during the readiness assessment. Add it only after availability is confirmed for the target project and API version.
+
+The default example configuration uses an `SP2` tier, `playground` as the
+database, and `CLEANUP=true`. Adjust `PROVIDER`, `REGION`, `TIER`, and
+`MAX_TIER` for the selected workspace, and keep credentials in the local
+`.env` file only.
+
+## Choose a Workflow
+
+- **Learn the core:** follow laboratories 01, 02, and 03 in order.
+- **Inspect operations:** use 07 for state, counters, samples, sink delivery,
+  DLQ, and logs; use 08 to compare serial and worker parallelism.
+- **Practice integrations:** continue with 04, 05, and 06 after the core path;
+  each one requires the corresponding external service or test adapter.
+- **Evaluate a submission:** use 00 for deterministic fixtures, assertions, and
+  a redacted JSON report.
 
 ## Recommended Experiment Flow
 
