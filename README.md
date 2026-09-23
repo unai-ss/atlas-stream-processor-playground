@@ -20,7 +20,7 @@ Choose the path that matches the capability you want to practice:
 
 The labs can be run manually from `mongosh`, while laboratory 00 defines the
 contract for a non-interactive automated runner. Every lab has its own README;
-laboratories 01 and 02 also include a repeatable setup manual.
+laboratories 01, 02, and 08 also include repeatable setup guidance.
 
 ## Project Catalog
 
@@ -34,7 +34,7 @@ laboratories 01 and 02 also include a repeatable setup manual.
 | [IP traffic HTTP enrichment](projects/05-http-enrichment) | Kenny Gorman |
 | [MongoDB CDC to Kinesis](projects/06-cdc-to-kinesis) | Igor Alekseev / MongoDB |
 | [Observability and troubleshooting](projects/07-metrics-observability) | MongoDB playground |
-| [Parallelism across ETL](projects/08-parallelism) | MongoDB playground |
+| [Parallelism across ETL: Sample and Change Stream](projects/08-parallelism) | MongoDB playground |
 
 Each folder contains a lab and a JavaScript processor to run in a Stream
 Processing Instance. These are educational adaptations, not official copies of
@@ -85,7 +85,8 @@ database, and `CLEANUP=true`. Adjust `PROVIDER`, `REGION`, `TIER`, and
 
 - **Learn the core:** follow laboratories 01, 02, and 03 in order.
 - **Inspect operations:** use 07 for state, counters, samples, sink delivery,
-  DLQ, and logs; use 08 to compare serial and worker parallelism.
+  DLQ, and logs; then use 08 first with Sample and next with the reproducible
+  Change Stream mode.
 - **Practice integrations:** continue with 04, 05, and 06 after the core path;
   each one requires the corresponding external service or test adapter.
 - **Evaluate a submission:** use 00 for deterministic fixtures, assertions, and

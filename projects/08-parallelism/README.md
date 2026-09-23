@@ -1,8 +1,26 @@
 # Laboratorio 08: paralelismo en las tres fases del ETL
 
-**Descripcion:** Compara una salida serial con una salida paralela y aprende a
-ubicar el paralelismo en extraccion, transformacion y carga sin confundir una
-mayor cantidad de workers con una mayor velocidad garantizada.
+**Descripcion:** Usa la observabilidad aprendida en el laboratorio 07 para
+comparar una salida serial con salidas paralelas. No es un benchmark oficial:
+es un experimento controlado sobre capacidad, resultados y riesgos de orden.
+
+Completa primero [laboratorio 07](../07-metrics-observability), que proporciona
+la linea base de estado, `stats()`, `sample()` y validacion del sink.
+
+El procedimiento operativo completo del modo reproducible esta en
+[MANUAL.md](MANUAL.md).
+
+El laboratorio ofrece dos modos:
+
+| Modo | Processor | Proposito |
+|---|---|---|
+| Introductorio | `processor.js` | Observar Sample y comparar la carga sin preparar datos. |
+| Reproducible | `processor-change-stream.js` | Comparar los mismos eventos con Change Streams. |
+
+Empieza con el modo Sample. Usa el modo Change Stream cuando quieras controlar
+el lote, repetir una ejecucion y estudiar secuencias, actualizaciones y orden.
+No cargues los dos modos al mismo tiempo porque crean processors con los mismos
+nombres.
 
 ## Objetivo
 
@@ -13,15 +31,17 @@ Al terminar, deberias poder:
   paralelismo del sink;
 - explicar por que una clave de particion estable es necesaria para conservar
   orden por entidad;
-- comparar una carga con `parallelism: 1` y otra con `parallelism: 2`.
+- comparar una carga con `parallelism: 1` y otra con `parallelism: 2`;
+- repetir el mismo experimento con varios volumenes sin mezclar ejecuciones;
+- distinguir rendimiento observado de correccion funcional.
 
 ## Idea principal
 
 ```mermaid
 flowchart LR
-    A[Extraccion<br/>particiones de entrada] --> B[Transformacion<br/>workers independientes]
+    A[sample_stream_solar] --> B[Transformacion<br/>por evento]
     B --> C[Carga<br/>emit paralelo]
-    A --> D[worker_demo como clave]
+    A --> D[device_id como entidad de referencia]
     D --> C
 ```
 
@@ -29,14 +49,14 @@ Las tres fases pueden aprovechar paralelismo, pero no se configuran igual:
 
 | Fase ETL | Que se paraleliza | Como se observa en este laboratorio |
 |---|---|---|
-| Extraccion | Lectura de particiones o shards independientes | La fuente Change Stream limita este ejemplo; `worker_demo` solo modela una clave de afinidad |
+| Extraccion | Lectura de eventos generados por Sample | Sample no ofrece aqui particiones ni volumen controlado |
 | Transformacion | Aplicacion de filtros y calculos sobre eventos independientes | Cada evento recibe `value_squared` y `transformed_at` |
 | Carga | Escrituras concurrentes hacia el sink | `$emit` usa `parallelism: 1` frente a `parallelism: 2` |
 
 En Atlas Stream Processing, `$emit.parallelism` es la configuracion visible de
 este ejemplo. La extraccion y la transformacion no reciben aqui un parametro
 `parallelism` independiente. Su rendimiento depende de la fuente, las
-particiones disponibles y la capacidad del workspace; `worker_demo` no crea
+particiones disponibles y la capacidad del workspace; `device_id` no crea
 particiones ni identifica el worker fisico.
 
 ## Preparacion
@@ -46,9 +66,22 @@ Necesitas:
 - un Stream Processing Workspace de pruebas;
 - una conexion Atlas llamada `atlas_lab`;
 - acceso al cluster Atlas con `mongosh`;
-- las colecciones `playground.parallelism_input`,
-  `playground.parallelism_serial_output` y
+- la conexion Sample `sample_stream_solar` para el modo introductorio;
+- la coleccion `playground.parallelism_input` para el modo Change Stream;
+- las colecciones `playground.parallelism_serial_output` y
   `playground.parallelism_parallel_output`.
+
+En el modo Sample, los documentos transformados usan estos campos de
+referencia:
+
+| Campo | Funcion |
+|---|---|
+| `device_id` | Se usa como entidad de referencia derivada del evento Sample. |
+| `observed_at` | Permite conservar la fecha normalizada del evento. |
+| `source` | Confirma que la salida procede de `sample_stream_solar`. |
+
+En el modo Change Stream se añaden `run_id`, `entity_id`, `sequence`,
+`partition_key` y `change_version` para controlar el experimento.
 
 En una terminal del proyecto, carga la configuracion local y comprueba el
 acceso de Atlas CLI:
@@ -72,9 +105,22 @@ mongosh "$ATLAS_URI"
 
 La conexión al workspace ASP usa su hostname y no `ATLAS_URI`.
 
-La coleccion de entrada debe recibir documentos nuevos despues de arrancar los
-processors. Los documentos anteriores al arranque no se reprocesan
-automaticamente.
+En el modo Sample, la fuente genera los documentos de entrada. En el modo
+Change Stream, el seeder escribe en `parallelism_input` despues de arrancar
+ambos processors.
+
+## Fase 1: establecer la linea base
+
+El objetivo es comprobar que el flujo funciona antes de cambiar el
+paralelismo. Limpia las colecciones, crea los processors y observa su estado.
+
+```javascript
+use playground
+db.parallelism_serial_output.deleteMany({})
+db.parallelism_parallel_output.deleteMany({})
+```
+
+Despues continua con el paso siguiente y usa `parallelism: 1` como referencia.
 
 ## Paso 1: crear y arrancar los processors
 
@@ -108,45 +154,25 @@ sp.labParallelismWorkers.stats()
 
 `stats()` debe mostrar `state: "STARTED"`, sin errores, antes de insertar datos.
 
-Para una comparación limpia, vuelve a la sesión Atlas y elimina los datos de
-ejecuciones anteriores antes de insertar el lote de prueba:
-
-```javascript
-use playground
-db.parallelism_input.deleteMany({})
-db.parallelism_serial_output.deleteMany({})
-db.parallelism_parallel_output.deleteMany({})
-```
-
 Los dos processors leen la misma forma de evento y ejecutan la misma
 transformacion. La unica diferencia experimental es la capacidad de carga:
 
 - `labParallelismSerial` escribe con un worker de emit;
 - `labParallelismWorkers` escribe con dos workers de emit;
-- ambos conservan `worker_demo` en el documento para comparar los resultados.
+- ambos conservan `device_id`, `observed_at` y `source` para comparar los
+  resultados.
 
 En este sink Atlas, `parallelism` controla los threads internos de escritura.
-No se configura `partitionBy` en `$emit` para una colección Atlas; por eso
-`worker_demo` no garantiza afinidad de escritura ni orden por partición.
+No se configura `partitionBy` en `$emit` para una colección Atlas. `device_id`
+permite agrupar la salida para observarla, pero no garantiza afinidad de
+escritura ni orden por partición.
 
-## Paso 2: comprobar la transformacion
+## Fase 2: comparar serial y paralelo
 
-En la sesion `mongosh` conectada al cluster Atlas, inserta eventos nuevos:
+### Paso 2: observar la misma fuente
 
-```javascript
-use playground
-
-db.parallelism_input.insertMany([
-  { sequence: 1, worker_demo: "partition-a", value: 2, observed_at: new Date() },
-  { sequence: 2, worker_demo: "partition-b", value: 3, observed_at: new Date() },
-  { sequence: 3, worker_demo: "partition-a", value: 4, observed_at: new Date() },
-  { sequence: 4, worker_demo: "partition-b", value: 5, observed_at: new Date() }
-])
-```
-
-Los eventos validos necesitan `sequence` numerico, `worker_demo` string, `value`
-numerico y `observed_at` de tipo fecha. Despues de insertarlos, en la sesion
-ASP ejecuta:
+No insertes documentos manualmente. Los dos processors reciben eventos de
+`sample_stream_solar` mientras estan arrancados. En la sesion ASP ejecuta:
 
 ```javascript
 sp.labParallelismSerial.sample()
@@ -157,17 +183,19 @@ Cada documento procesado debe incluir:
 
 ```javascript
 {
-  sequence: 1,
-  worker_demo: "partition-a",
-  value: 2,
-  value_squared: 4,
-  etl_stage: "transform"
+  device_id: "device_8",
+  entity_id: "device_8",
+  value: 252,
+  observed_at: ISODate("2024-08-12T21:41:01.788Z"),
+  value_squared: 63504,
+  etl_stage: "transform",
+  source: "sample_stream_solar"
 }
 ```
 
 `value_squared` demuestra que el evento atraveso la fase de transformacion;
-`worker_demo` permite razonar sobre como se agrupan los eventos; no es una
-medicion del worker fisico que ejecuto cada documento.
+`device_id` sirve como entidad de referencia y `source` confirma el origen.
+Ninguno de esos campos identifica el worker fisico ni crea una particion real.
 
 ## Paso 3: comparar la carga
 
@@ -178,20 +206,22 @@ use playground
 
 db.parallelism_serial_output.countDocuments()
 db.parallelism_parallel_output.countDocuments()
-db.parallelism_parallel_output.find().sort({ worker_demo: 1, sequence: 1 }).pretty()
+db.parallelism_parallel_output.find().sort({ device_id: 1, observed_at: 1 }).pretty()
 ```
 
-Compara tambien los documentos por `sequence`, no solo los contadores:
+Compara tambien los documentos por `device_id` y `observed_at`, no solo los
+contadores:
 
 ```javascript
-db.parallelism_serial_output.find({}, { _id: 0, sequence: 1, value_squared: 1 }).sort({ sequence: 1 }).toArray()
-db.parallelism_parallel_output.find({}, { _id: 0, sequence: 1, value_squared: 1 }).sort({ sequence: 1 }).toArray()
+db.parallelism_serial_output.find({}, { _id: 0, device_id: 1, value: 1, value_squared: 1, observed_at: 1 }).sort({ device_id: 1, observed_at: 1 }).toArray()
+db.parallelism_parallel_output.find({}, { _id: 0, device_id: 1, value: 1, value_squared: 1, observed_at: 1 }).sort({ device_id: 1, observed_at: 1 }).toArray()
 ```
 
-Los dos sinks deben contener el mismo numero de eventos validos y los mismos
-valores transformados. La salida paralela no tiene por que terminar antes con
-un lote pequeño: el beneficio aparece cuando hay suficiente volumen, trabajo
-por evento y capacidad disponible.
+Las salidas deben contener documentos con la misma forma transformada. No
+exijas el mismo numero exacto ni una misma ventana temporal: Sample genera el
+flujo y los dos processors pueden observar momentos distintos de esa fuente.
+La salida paralela no tiene por que terminar antes; el beneficio aparece solo
+si hay suficiente trabajo y capacidad disponible.
 
 Comprueba también que no se crearon documentos invalidos:
 
@@ -200,18 +230,113 @@ db.parallelism_serial_output.countDocuments({ _id: null })
 db.parallelism_parallel_output.countDocuments({ _id: null })
 ```
 
-Ambos resultados deben ser `0`. Las colecciones de salida conservan los
-eventos de ejecuciones anteriores, así que para una comparación limpia
-elimínalas antes de volver a ejecutar el experimento.
+Ambos resultados deben ser `0`. Las colecciones de salida conservan eventos de
+ejecuciones anteriores, por lo que conviene vaciarlas antes de cada observacion.
 
-## Experimento guiado
+## Modo B: experimento reproducible con Change Stream
 
-1. Inserta 100 o mas eventos repartidos entre `partition-a` y `partition-b`.
-2. Observa `stats()` en ambos processors antes y despues de la insercion.
-3. Compara los contadores de los dos sinks.
-4. Cambia temporalmente `parallelism: 2` a `parallelism: 1` y repite la prueba.
-5. Pregunta: que ocurriria si dos eventos de la misma entidad pudieran escribirse
-  en paralelo sin una garantía de orden del sink?
+Este modo usa la misma colección de entrada para los dos processors. Como ambos
+se conectan antes de insertar datos, cada uno recibe el mismo lote de cambios.
+
+### Preparar la colección y los sinks
+
+En el cluster Atlas:
+
+```javascript
+use playground
+db.parallelism_input.deleteMany({})
+db.parallelism_serial_output.deleteMany({})
+db.parallelism_parallel_output.deleteMany({})
+```
+
+En el workspace ASP, si ya ejecutaste el modo Sample, detén y elimina sus
+processors antes de cargar el modo Change Stream:
+
+```javascript
+sp.labParallelismSerial.stop()
+sp.labParallelismWorkers.stop()
+sp.labParallelismSerial.drop()
+sp.labParallelismWorkers.drop()
+load("[local-repository]/projects/08-parallelism/processor-change-stream.js")
+sp.labParallelismSerial.start()
+sp.labParallelismWorkers.start()
+sp.labParallelismSerial.stats()
+sp.labParallelismWorkers.stats()
+```
+
+Los dos processors deben mostrar `state: "STARTED"` antes de insertar datos.
+
+### Insertar el lote controlado
+
+En otra sesión `mongosh`, conectada al cluster Atlas, ejecuta:
+
+```javascript
+load("[local-repository]/scripts/08-seed-parallelism.js")
+```
+
+El seeder inserta 100 eventos para `run-001` y después actualiza un evento de
+cada entidad. Con `fullDocument: "updateLookup"`, los processors reciben los
+documentos completos también para esos cambios.
+
+Comprueba el resultado:
+
+```javascript
+use playground
+
+db.parallelism_serial_output.countDocuments({ run_id: "run-001" })
+db.parallelism_parallel_output.countDocuments({ run_id: "run-001" })
+db.parallelism_parallel_output.find({ run_id: "run-001" }).sort({ entity_id: 1, sequence: 1, change_version: 1 }).toArray()
+```
+
+La expectativa educativa es observar 104 cambios por sink: 100 inserciones y
+4 actualizaciones. La comparación debe revisar también `value`,
+`value_squared` y `change_version`, no solamente el contador.
+
+Este modo permite estudiar de forma controlada duplicados, actualizaciones y
+secuencias. No convierte `$emit.parallelism` en una garantía de orden: la
+corrección del resultado y el orden deben comprobarse por separado.
+
+## Fase 3: observar durante intervalos iguales en modo Sample
+
+Sample no permite elegir lotes de 100, 1.000 o 5.000 eventos. Para una
+comparacion educativa, observa ambos processors durante intervalos iguales y
+anota el momento de inicio y fin:
+
+| Medida | Como obtenerla |
+|---|---|
+| Eventos observados | Diferencia de conteos del sink durante el intervalo. |
+| Eventos de salida | Conteo de cada sink al final del intervalo. |
+| Errores | `stats()` y DLQ/logs si existen. |
+| Duracion | Hora de inicio y fin del intervalo. |
+| Throughput aproximado | Eventos observados dividido por duracion. |
+
+Compara solo tendencias dentro del mismo workspace. No presentes el resultado
+como una garantia de rendimiento para otros tiers, regiones o destinos.
+
+## Fase 4: limites del experimento
+
+Con Sample puedes comprobar:
+
+- que ambos pipelines realizan la misma transformacion;
+- que `parallelism: 1` y `parallelism: 2` escriben en sinks separados;
+- que el estado, `stats()` y `sample()` siguen siendo observables;
+- que el destino puede convertirse en el cuello de botella.
+
+En modo Sample no puedes demostrar de forma controlada eventos perdidos,
+duplicados, secuencias fuera de orden, reintentos o idempotencia. Esos temas sí
+se pueden estudiar en el modo Change Stream con `run_id`, `sequence` y
+`change_version`, siempre comprobando los resultados por entidad.
+
+## Guia de diagnostico
+
+| Sintoma | Hipotesis inicial | Comprobacion barata |
+|---|---|---|
+| No hay salida | Processor detenido o conexion incorrecta | `stats()` y estado `STARTED` |
+| Menos salida | Sample emite a otro ritmo o el filtro descarta un evento | Comparar `sample()` y conteos del sink |
+| Mismo tiempo con 1 y 2 workers | Lote pequeno o sink limitante | Repetir con 1.000 eventos |
+| Mas errores con 2 workers | Capacidad o limites del destino | Revisar `stats()` y logs |
+| Duplicados | Observacion en momentos distintos o reintentos del sink | Comparar documentos por `device_id` y `observed_at` |
+| Orden distinto | Sample no ofrece una secuencia controlada | No concluir orden por entidad con este lab |
 
 ## Que significa paralelizar cada fase
 
@@ -219,9 +344,9 @@ elimínalas antes de volver a ejecutar el experimento.
 
 La fuente debe poder dividir el flujo en particiones independientes. En una
 fuente particionada, aumentar consumidores solo ayuda si existen particiones
-suficientes y la clave reparte el trafico. Este laboratorio usa un Change Stream
-de MongoDB, por lo que no demuestra particiones de extraccion configurables;
-`worker_demo` solo permite hablar de afinidad de datos.
+suficientes y la clave reparte el trafico. `sample_stream_solar` no demuestra
+particiones de extraccion configurables; `device_id` solo permite agrupar la
+salida para observarla.
 
 ### Transformacion
 
@@ -237,12 +362,12 @@ concurrentes. No elimina limites de cuota ni garantiza orden global.
 
 ## Preguntas de comprobacion
 
-- Que parte del laboratorio representa la clave de particion de entrada?
+- Que campo de Sample usamos como entidad de referencia?
 - Por que `value_squared` prueba la transformacion pero no mide el numero de workers?
 - Que propiedad cambia entre las dos salidas?
-- Por que dos sinks pueden tener la misma cantidad de documentos aunque uno use
-  paralelismo?
-- En que casos el paralelismo puede empeorar el resultado o romper el orden?
+- Por que dos sinks pueden tener cantidades distintas aunque lean la misma
+  fuente Sample?
+- Que afirmaciones sobre orden no podemos hacer con Sample?
 - Que capacidad del destino debes comprobar antes de aumentar `parallelism`?
 
 ## Limpieza
@@ -260,7 +385,6 @@ En el cluster Atlas:
 
 ```javascript
 use playground
-db.parallelism_input.drop()
 db.parallelism_serial_output.drop()
 db.parallelism_parallel_output.drop()
 ```

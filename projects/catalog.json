@@ -8,6 +8,6 @@
     { "id": "05-http-enrichment", "name": "IP traffic HTTP enrichment", "author": "Kenny Gorman", "medium": "https://medium.com/towards-data-engineering/enriching-via-api-the-https-operator-in-mongodb-atlas-stream-processing-bbe03ad70ac8", "lab": "projects/05-http-enrichment" },
     { "id": "06-cdc-to-kinesis", "name": "MongoDB CDC to Kinesis", "author": "Igor Alekseev / MongoDB", "medium": "https://medium.com/mongodb/streaming-mongodb-change-events-to-amazon-redshift-via-atlas-stream-processing-and-kinesis-9922cb2ef611", "lab": "projects/06-cdc-to-kinesis" },
     { "id": "07-metrics-observability", "name": "Observability and troubleshooting", "author": "MongoDB playground", "medium": null, "lab": "projects/07-metrics-observability" },
-    { "id": "08-parallelism", "name": "Parallelism across ETL", "author": "MongoDB playground", "medium": null, "lab": "projects/08-parallelism" }
+    { "id": "08-parallelism", "name": "Parallelism across ETL: Sample and Change Stream", "author": "MongoDB playground", "medium": null, "lab": "projects/08-parallelism" }
   ]
 }

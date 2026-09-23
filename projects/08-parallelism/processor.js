@@ -1,39 +1,40 @@
 const source = {
   $source: {
-    connectionName: "atlas_lab",
-    db: "playground",
-    coll: "parallelism_input",
-    config: { fullDocument: "updateLookup" }
+    connectionName: "sample_stream_solar"
   }
 };
 
 const filterAndProject = [
   {
     $match: {
-      operationType: { $in: ["insert", "replace", "update"] },
-      fullDocument: { $ne: null }
-    }
-  },
-  {
-    $replaceRoot: {
-      newRoot: "$fullDocument"
-    }
-  },
-  {
-    $match: {
-      sequence: { $type: "number" },
-      worker_demo: { $type: "string" },
-      value: { $type: "number" },
-      observed_at: { $type: "date" }
+      device_id: { $type: "string" },
+      "obs.watts": { $type: "number" }
     }
   },
   {
     $project: {
       _id: 1,
-      sequence: 1,
-      worker_demo: 1,
-      value: 1,
-      observed_at: 1
+      device_id: 1,
+      entity_id: "$device_id",
+      value: "$obs.watts",
+      observed_at: {
+        $cond: [
+          { $eq: [{ $type: "$timestamp" }, "date"] },
+          "$timestamp",
+          {
+            $dateFromString: {
+              dateString: "$timestamp",
+              onError: {
+                $dateFromString: { dateString: "2026-09-11T00:00:00Z" }
+              },
+              onNull: {
+                $dateFromString: { dateString: "2026-09-11T00:00:00Z" }
+              }
+            }
+          }
+        ]
+      },
+      source: { $literal: "sample_stream_solar" }
     }
   },
   {
