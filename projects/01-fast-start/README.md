@@ -9,6 +9,10 @@ Documentacion oficial relacionada: https://www.mongodb.com/docs/atlas/atlas-stre
 **Descripcion:** Observa eventos de `sample_stream_solar` y aprende a crear un
 processor persistente que los escribe en una coleccion Atlas.
 
+La infraestructura se prepara una sola vez en el [laboratorio 00](../00-assessment/).
+Este laboratorio se centra en el pipeline, su ciclo de vida y los documentos
+que llegan al cluster.
+
 ## Objetivo
 
 Completar el primer flujo de Atlas Stream Processing en dos pasos: comprobar
@@ -34,6 +38,10 @@ sample_stream_solar
 ```
 
 ## Preparacion
+
+Si todavía no existe el workspace o alguna conexión, sigue primero el
+[manual de infraestructura del laboratorio 00](../00-assessment/MANUAL.md).
+Aquí no se crean clusters, usuarios ni workspaces.
 
 El workspace de Stream Processing suele incluir la conexion `Sample`
 `sample_stream_solar`. Si no aparece en `sp.listConnections()`, registrala

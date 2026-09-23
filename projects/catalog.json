@@ -1,6 +1,6 @@
 {
   "projects": [
-    { "id": "00-assessment", "name": "Automated playground assessment", "author": "MongoDB playground", "medium": null, "lab": "projects/00-assessment" },
+    { "id": "00-assessment", "name": "Infrastructure and automated playground assessment", "author": "MongoDB playground", "medium": null, "lab": "projects/00-assessment" },
     { "id": "01-fast-start", "name": "Fast start with Sample source", "author": "Kenny Gorman", "medium": "https://medium.com/mongodb/the-fastest-way-to-try-atlas-stream-processing-43cd7e0cfe1e", "lab": "projects/01-fast-start" },
     { "id": "02-taco-tracking", "name": "Taco delivery tracking", "author": "Kenny Gorman", "medium": "https://medium.com/mongodb/locating-tacos-with-atlas-stream-processing-or-streaming-etl-with-mongodb-8b43b4d6ae54", "lab": "projects/02-taco-tracking" },
     { "id": "03-ruuvi-motion", "name": "Ruuvi motion aggregation", "author": "Kenny Gorman", "medium": "https://medium.com/mongodb/lets-iot-with-ruuvi-atlas-stream-processing-735d2bac6249", "lab": "projects/03-ruuvi-motion" },

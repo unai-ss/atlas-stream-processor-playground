@@ -1,284 +1,55 @@
-# Manual laboratorio 01: Cluster0 M0 y primer processor ASP
+# Manual laboratorio 01: primer pipeline con Sample
 
-Este manual permite repetir el laboratorio 01 desde cero en el proyecto Atlas
-`[redacted]`, usando un cluster M0 llamado `Cluster0` y un workspace de
-Atlas Stream Processing llamado `asp-lab01-gcp-us-west1`.
+La infraestructura se crea una sola vez en el [manual del laboratorio 00](../00-assessment/MANUAL.md). Este manual empieza con un workspace ASP ya disponible y se concentra en cargar, ejecutar y observar el pipeline.
 
-El manual usa el `PROJECT_ID` configurado en `.env`. Si se reutiliza en otro
-proyecto, cambia `.env` y no edites los comandos uno por uno.
+## Prerrequisitos
 
-No ejecutes este laboratorio contra datos de produccion. No pegues contrasenas,
-connection strings ni capturas con secretos en tickets, commits o chats.
+Comprueba que existen:
 
-## Recursos creados
+- workspace ASP en estado operativo;
+- conexion `sample_stream_solar`;
+- conexion Atlas `atlas_lab`;
+- coleccion o permisos para crear `playground.fast_start_events`.
 
-| Recurso | Nombre |
-|---|---|
-| Atlas project | `[redacted]` |
-| Project id | `658d4a0cfdc68a319efa586a` |
-| Cluster | `Cluster0` |
-| Cluster tier | `M0` |
-| ASP workspace | `asp-lab01-gcp-us-west1` |
-| ASP tier | `SP2` |
-| Sample source | `sample_stream_solar` |
-| Atlas sink connection | `atlas_lab` |
-| Processor | `labFastStart` |
-| Sink namespace | `playground.fast_start_events` |
-
-## Paso 0: preparar entorno local
-
-```bash
-cd [local-repository]
-source .env
-
-export CLUSTER_NAME="Cluster0"
-export DATABASE_NAME="playground"
-export COLLECTION_NAME="fast_start_events"
-export WORKSPACE="asp-lab01-gcp-us-west1"
-export PROCESSOR="labFastStart"
-export PROVIDER="GCP"
-export REGION="US_WEST1"
-export TIER="SP2"
-export MAX_TIER="SP2"
-export EVIDENCE_DIR="readiness-evidence/${WORKSPACE}"
-
-mkdir -p "$EVIDENCE_DIR"
-```
-
-Comprueba herramientas y sesion:
-
-```bash
-atlas --version
-mongosh --version
-jq --version
-atlas auth whoami
-```
-
-Si la sesion Atlas esta caducada:
-
-```bash
-atlas auth login
-```
-
-## Paso 1: crear o validar Cluster0 M0
-
-Comprueba si `Cluster0` ya existe:
-
-```bash
-atlas clusters describe "$CLUSTER_NAME" \
-  --projectId "$PROJECT_ID" \
-  --output json | jq -r '.name, .stateName, .providerSettings.instanceSizeName'
-```
-
-Si no existe, crealo como M0 gratuito cuando la organizacion y la region lo
-permitan:
-
-```bash
-atlas clusters create "$CLUSTER_NAME" \
-  --projectId "$PROJECT_ID" \
-  --provider AWS \
-  --region EU_WEST_1 \
-  --tier M0 \
-  --tag env=playground \
-  --watch
-```
-
-Si `EU_WEST_1` no esta disponible para M0, usa una region M0 aceptada por el
-error del CLI, por ejemplo `US_EAST_1`.
-
-Vuelve a comprobar el estado:
-
-```bash
-atlas clusters describe "$CLUSTER_NAME" \
-  --projectId "$PROJECT_ID" \
-  --output json | jq -r '.name, .stateName, .providerSettings.instanceSizeName'
-```
-
-El estado esperado al terminar es `IDLE` y tier `M0`.
-
-## Paso 2: preparar credenciales de base de datos
-
-Necesitas un usuario de base de datos con permisos suficientes para el
-laboratorio. Si ya tienes un usuario en `ATLAS_URI`, reutilizalo. Si necesitas
-crear uno nuevo, usa una contrasena local que no se guarde en Git ni en el
-historial de shell:
-
-```bash
-printf 'Password for stream[redacted]: '
-read -r -s DB_PASSWORD
-printf '\n'
-
-atlas dbusers create atlasAdmin \
-  --projectId "$PROJECT_ID" \
-  --username stream[redacted] \
-  --password "$DB_PASSWORD"
-
-unset DB_PASSWORD
-```
-
-Para este laboratorio, `stream[redacted]` debe tener el rol `readWrite` sobre la
-base de datos `playground`. El usuario del Atlas CLI y el usuario de MongoDB
-son identidades distintas.
-
-Autoriza tu IP actual si el cluster no acepta conexiones desde tu maquina:
-
-```bash
-atlas accessLists create "$(curl -s https://checkip.amazonaws.com)/32" \
-  --projectId "$PROJECT_ID" \
-  --comment "asp playground local access"
-```
-
-Actualiza `.env` localmente con la URI del cluster si es necesario. No subas
-`.env` a Git.
-
-## Paso 3: crear el workspace ASP
-
-Genera la definicion del workspace:
-
-```bash
-jq -n \
-  --arg name "$WORKSPACE" \
-  --arg provider "$PROVIDER" \
-  --arg region "$REGION" \
-  --arg tier "$TIER" \
-  --arg maxTierSize "$MAX_TIER" \
-  '{
-    name: $name,
-    dataProcessRegion: {
-      cloudProvider: $provider,
-      region: $region
-    },
-    streamConfig: {
-      tier: $tier,
-      maxTierSize: $maxTierSize
-    }
-  }' > "$EVIDENCE_DIR/workspace.json"
-```
-
-Crea el workspace:
-
-```bash
-atlas api streams createStreamWorkspace \
-  --groupId "$PROJECT_ID" \
-  --file "$EVIDENCE_DIR/workspace.json" \
-  --output json > "$EVIDENCE_DIR/workspace-created.json"
-```
-
-Comprueba que existe:
-
-```bash
-atlas api streams getStreamWorkspace \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --output json > "$EVIDENCE_DIR/workspace-status.json" && \
-jq '{name, dataProcessRegion, streamConfig, hostnames}' \
-  "$EVIDENCE_DIR/workspace-status.json"
-```
-
-## Paso 4: comprobar la fuente Sample
-
-Lista conexiones del workspace:
-
-```bash
-atlas api streams listStreamConnections \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --output json | jq '.connections // .results // .'
-```
-
-Si `sample_stream_solar` no aparece, crea la conexion:
-
-```bash
-jq -n '{name:"sample_stream_solar",type:"Sample"}' \
-  > "$EVIDENCE_DIR/sample-connection.json"
-
-atlas api streams createStreamConnection \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --file "$EVIDENCE_DIR/sample-connection.json" \
-  --output json > "$EVIDENCE_DIR/sample-connection-created.json"
-```
-
-## Paso 5: crear la conexion Atlas `atlas_lab`
-
-```bash
-jq -n \
-  --arg cluster "$CLUSTER_NAME" \
-  '{
-    name:"atlas_lab",
-    type:"Cluster",
-    clusterName:$cluster,
-    dbRoleToExecute:{role:"atlasAdmin",type:"BUILT_IN"}
-  }' > "$EVIDENCE_DIR/atlas-connection.json"
-
-atlas api streams createStreamConnection \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --file "$EVIDENCE_DIR/atlas-connection.json" \
-  --output json > "$EVIDENCE_DIR/atlas-connection-created.json"
-```
-
-## Paso 6: preparar la coleccion time-series
-
-Ejecuta esto contra el cluster Atlas, no contra el workspace ASP:
-
-```bash
-mongosh "$ATLAS_URI" --quiet --eval '
-const database = db.getSiblingDB("playground");
-const name = "fast_start_events";
-const info = database.getCollectionInfos({ name })[0];
-
-if (!info) {
-  database.createCollection(name, { timeseries: { timeField: "timestamp" } });
-  print("SINK_TIMESERIES_CREATED");
-} else if (!info.options.timeseries) {
-  print("SINK_COLLECTION_IS_NOT_TIMESERIES");
-  quit(2);
-} else {
-  print("SINK_TIMESERIES_EXISTS");
-}
-'
-```
-
-## Paso 7: conectarse al workspace ASP
-
-Obtiene el host del workspace:
-
-```bash
-export ASP_HOST="$(
-  atlas api streams getStreamWorkspace \
-    --groupId "$PROJECT_ID" \
-    --tenantName "$WORKSPACE" \
-    --output json > "$EVIDENCE_DIR/workspace-status.json" && \
-  jq -r '.hostnames[0]' "$EVIDENCE_DIR/workspace-status.json"
-)"
-
-printf '[%s]\n' "$ASP_HOST"
-```
-
-El valor debe terminar en `.mongodb.net`, sin texto extra al final.
-
-Conecta con `mongosh`:
-
-```bash
-mongosh "mongodb://$ASP_HOST/" \
-  --tls \
-  --authenticationDatabase admin \
-  --username stream[redacted] \
-  --password
-```
-
-El usuario de base de datos usado por este playground es `stream[redacted]`. La
-cuenta `[redacted]` se usa para autenticarse con Atlas CLI.
-Escribe la contrasena directamente en la terminal cuando `mongosh` la pida.
-
-## Paso 8: validar que Sample emite datos
-
-Dentro del `mongosh` conectado al workspace ASP:
+En el workspace ASP:
 
 ```javascript
 sp.listConnections()
+```
 
+En el cluster Atlas:
+
+```bash
+mongosh "$ATLAS_URI"
+```
+
+No vuelvas a crear el cluster, el usuario ni el workspace desde este manual.
+
+## Preflight obligatorio
+
+En el workspace ASP confirma las conexiones y elimina una ejecución anterior:
+
+```javascript
+sp.listConnections()
+try { sp.labFastStart.stop() } catch (error) {}
+try { sp.labFastStart.drop() } catch (error) {}
+```
+
+En el cluster Atlas, limpia únicamente el sink del laboratorio:
+
+```javascript
+use playground
+db.fast_start_events.deleteMany({})
+```
+
+Si falta `sample_stream_solar`, `atlas_lab` o el workspace no está operativo,
+detente y completa el [laboratorio 00](../00-assessment/MANUAL.md).
+
+## Paso 1: observar la fuente
+
+Conectado al workspace ASP:
+
+```javascript
 sp.process([
   {
     $source: {
@@ -288,96 +59,50 @@ sp.process([
 ])
 ```
 
-Si ves eventos, termina el processor temporal con `Ctrl-C`.
+Observa la forma de los documentos y termina la ejecución temporal con `Ctrl-C`.
 
-## Paso 9: crear y arrancar `labFastStart`
-
-Dentro del `mongosh` conectado al workspace ASP:
+## Paso 2: cargar el pipeline
 
 ```javascript
 load("[local-repository]/projects/01-fast-start/processor.js")
 sp.listStreamProcessors()
+```
+
+`load()` ejecuta el archivo local en `mongosh`; `sp.createStreamProcessor()`
+registra el pipeline como `labFastStart`.
+
+## Paso 3: iniciar y observar
+
+```javascript
 sp.labFastStart.start()
 sp.labFastStart.stats()
 sp.labFastStart.sample()
 ```
 
-## Paso 10: verificar la salida en Atlas
+Comprueba el estado del processor y observa cómo `$set` normaliza `timestamp`
+antes de que `$emit` escriba en Atlas.
 
-En otra terminal, contra el cluster Atlas:
+## Paso 4: comprobar documentos en Atlas
 
-```bash
-mongosh "$ATLAS_URI" --quiet --eval '
-const database = db.getSiblingDB("playground");
-print("count:");
-print(database.fast_start_events.countDocuments());
-print("sample:");
-printjson(database.fast_start_events.findOne({ timestamp: { $type: "date" } }));
-'
+```javascript
+use playground
+db.fast_start_events.countDocuments()
+db.fast_start_events.findOne({ timestamp: { $type: "date" } })
 ```
 
-El laboratorio pasa si el contador es mayor que cero y el documento contiene
-`timestamp`, `device_id`, `obs.watts` y `obs.temp`.
+El resultado debe contener `timestamp`, `device_id`, `obs.watts` y `obs.temp`.
 
-## Paso 11: limpiar ASP y Cluster0
+## Ejercicio
 
-Primero elimina el processor desde el workspace ASP:
+Añade temporalmente un `$match` que conserve solo eventos con `obs.watts`
+mayor que 200. Usa `sample()` y consulta el sink para comprobar el efecto.
+
+## Limpieza del pipeline
 
 ```javascript
 sp.labFastStart.stop()
 sp.labFastStart.drop()
-sp.listStreamProcessors()
 ```
 
-Si ya no tienes una sesion `mongosh` abierta contra el workspace ASP, usa la
-API en su lugar:
-
-```bash
-atlas api streams stopStreamProcessor \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --processorName "$PROCESSOR" \
-  --output json
-
-atlas api streams deleteStreamProcessor \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --processorName "$PROCESSOR" \
-  --output json
-```
-
-Despues elimina conexiones y workspace desde la terminal:
-
-```bash
-atlas api streams deleteStreamConnection \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --connectionName "atlas_lab" \
-  --output json
-
-atlas api streams deleteStreamWorkspace \
-  --groupId "$PROJECT_ID" \
-  --tenantName "$WORKSPACE" \
-  --output json
-```
-
-Elimina `sample_stream_solar` solo si la creaste manualmente y no venia por
-defecto en el workspace.
-
-Finalmente destruye `Cluster0`:
-
-```bash
-atlas clusters delete "$CLUSTER_NAME" \
-  --projectId "$PROJECT_ID" \
-  --force \
-  --watch
-```
-
-Comprueba que ya no existe:
-
-```bash
-atlas clusters describe "$CLUSTER_NAME" \
-  --projectId "$PROJECT_ID"
-```
-
-El resultado esperado es un error indicando que el cluster no existe.
+La limpieza del workspace y del cluster pertenece al laboratorio 00 y no debe
+hacerse desde este manual salvo que los recursos sean exclusivos de la práctica.

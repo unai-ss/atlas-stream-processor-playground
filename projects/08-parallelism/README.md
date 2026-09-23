@@ -61,6 +61,13 @@ particiones ni identifica el worker fisico.
 
 ## Preparacion
 
+Prepara primero el entorno común con el [laboratorio 00](../00-assessment/MANUAL.md).
+Este laboratorio no crea clusters, usuarios ni workspaces.
+
+Para el modo Change Stream, sigue el [manual operativo](MANUAL.md): detiene
+processors anteriores y limpia solo las colecciones de este laboratorio antes
+de insertar documentos nuevos.
+
 Necesitas:
 
 - un Stream Processing Workspace de pruebas;

@@ -40,6 +40,10 @@ y un usuario de base de datos con permisos de lectura y escritura sobre
 `playground`. La guia general de workspace esta en
 [ASP_OPERATIONS_GUIDE.md](../../ASP_OPERATIONS_GUIDE.md).
 
+Si el workspace, el cluster o `atlas_lab` no están disponibles, detente y
+completa primero el [laboratorio 00](../00-assessment/MANUAL.md). Este manual no
+crea ni elimina infraestructura compartida.
+
 Este manual usa el mismo workspace y cluster de pruebas que el resto del
 playground. No imprime ni modifica credenciales.
 

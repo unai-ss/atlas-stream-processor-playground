@@ -1,11 +1,17 @@
-# Laboratorio 00: evaluacion automatica del playground
+# Laboratorio 00: infraestructura y evaluacion del playground
 
 ## Proposito
 
-Este laboratorio comprueba que una persona puede construir y operar pipelines de
-Atlas Stream Processing sin seguir una receta manual durante la evaluacion. El
-runner prepara datos de prueba, ejecuta el pipeline entregado y valida sus
-resultados con criterios observables.
+Este laboratorio tiene dos responsabilidades relacionadas:
+
+1. preparar y validar la infraestructura común que reutilizan los laboratorios
+  01, 02, 07 y 08;
+2. definir la evaluación automática de pipelines con fixtures y assertions.
+
+La creación detallada de proyecto, cluster, usuario, workspace y conexiones
+está en el [manual de infraestructura](MANUAL.md). Los laboratorios posteriores
+no repiten esos pasos: se concentran en pipelines, observabilidad y documentos
+creados en el cluster.
 
 La evaluacion usa un proyecto Atlas dedicado y nombres aislados. No usa datos de
 clientes, credenciales en archivos ni recursos de produccion.
@@ -18,6 +24,23 @@ flowchart LR
     B --> C[Processor del evaluado]
     C --> D[Assertions de salida]
     D --> E[Informe JSON]
+```
+
+## Salida de infraestructura
+
+Antes de continuar, valida que el entorno común dispone de:
+
+- un cluster Atlas de pruebas y un usuario de base de datos;
+- un workspace ASP operativo;
+- la conexión `sample_stream_solar`;
+- la conexión Atlas `atlas_lab`;
+- permisos para crear y consultar las colecciones de los laboratorios.
+
+Después de esta comprobación, sigue el orden pedagógico:
+
+```text
+00 infraestructura -> 01 pipeline Sample -> 02 Change Stream
+                    -> 07 observabilidad -> 08 paralelismo
 ```
 
 El evaluado solo necesita entregar los processors o completar las tareas

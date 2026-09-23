@@ -52,6 +52,9 @@ sample_stream_solar -> processor observable -> metrics_output -> diagnostico gui
 
 ## Preparacion
 
+Prepara primero el entorno común con el [laboratorio 00](../00-assessment/MANUAL.md).
+Este laboratorio no crea clusters, usuarios ni workspaces.
+
 Necesitas:
 
 - un workspace ASP de pruebas;
@@ -59,6 +62,25 @@ Necesitas:
 - acceso al cluster Atlas con `mongosh`;
 - la conexion Sample `sample_stream_solar`;
 - la coleccion `playground.metrics_output`.
+
+Antes de cargar el pipeline, ejecuta este preflight en el workspace ASP:
+
+```javascript
+sp.listConnections()
+try { sp.labMetricsObservability.stop() } catch (error) {}
+try { sp.labMetricsObservability.drop() } catch (error) {}
+```
+
+En el cluster Atlas, limpia el sink del laboratorio para no mezclar resultados
+anteriores:
+
+```javascript
+use playground
+db.metrics_output.drop()
+```
+
+Si falta `sample_stream_solar`, `atlas_lab` o el workspace no está operativo,
+detente y completa el [laboratorio 00](../00-assessment/MANUAL.md).
 
 Para trabajar con las colecciones del cluster Atlas, conecta con:
 

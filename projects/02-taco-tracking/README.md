@@ -7,6 +7,10 @@ Fuente: https://medium.com/mongodb/locating-tacos-with-atlas-stream-processing-o
 **Descripcion:** Lee cambios de `taco_events`, agrupa las entregas en ventanas
 y mantiene una vista materializada con la posicion mas reciente.
 
+La infraestructura común se prepara en el [laboratorio 00](../00-assessment/).
+Este laboratorio se centra en crear documentos en Atlas, observar el Change
+Stream y materializar la vista de entregas.
+
 ## Objetivo
 
 Transformar cambios de una coleccion Atlas en una vista materializada con la
@@ -32,6 +36,9 @@ ultima posicion conocida de cada entrega.
 
 ## Preparacion
 
+Comprueba primero la infraestructura del [laboratorio 00](../00-assessment/MANUAL.md).
+No repitas aquí la creación del cluster, el usuario ni el workspace.
+
 Necesitas:
 
 - el mismo workspace ASP y la conexion Atlas `atlas_lab` del laboratorio 01;
@@ -47,10 +54,9 @@ mongosh "$ATLAS_URI"
 ```
 
 Para conectarte al workspace ASP usa su hostname `ASP_HOST`; es un endpoint
-distinto del cluster Atlas.
-Antes de crear el cluster, sigue el [manual operativo del laboratorio](MANUAL.md)
-desde el paso 0. El manual lista todos los clusters del proyecto, no solo
-`Cluster0`, y pide confirmacion explicita antes de borrarlos.
+distinto del cluster Atlas. Ejecuta el [preflight del manual](MANUAL.md) antes
+de cargar el processor. Si faltan infraestructura o conexiones, completa el
+[laboratorio 00](../00-assessment/MANUAL.md).
 
 `$merge` puede crear `playground.taco_locations` durante la primera ventana.
 

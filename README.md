@@ -16,17 +16,18 @@ Choose the path that matches the capability you want to practice:
 | ASP core | 01 Sample, 02 Change Streams, 03 Ruuvi | Atlas only |
 | Operations | 07 observability, 08 ETL parallelism | Atlas only |
 | Integrations | 04 late-data join, 05 HTTP enrichment, 06 CDC to Kinesis | Kafka, HTTP, or AWS as applicable |
-| Assessment | 00 automated playground assessment | Controlled fixtures and adapters |
+| Setup and assessment | 00 infrastructure and automated assessment | Controlled fixtures and adapters |
 
-The labs can be run manually from `mongosh`, while laboratory 00 defines the
+Prepare infrastructure once with laboratory 00, then run the pipeline labs
+manually from `mongosh`. Laboratory 00 also defines the
 contract for a non-interactive automated runner. Every lab has its own README;
-laboratories 01, 02, and 08 also include repeatable setup guidance.
+laboratories 00, 01, 02, and 08 also include repeatable setup guidance.
 
 ## Project Catalog
 
 | Proyecto | Autor |
 |---|---|
-| [Automated playground assessment](projects/00-assessment) | MongoDB playground |
+| [Infrastructure and automated playground assessment](projects/00-assessment) | MongoDB playground |
 | [Fast start with Sample source](projects/01-fast-start) | Kenny Gorman |
 | [Taco delivery tracking](projects/02-taco-tracking) | Kenny Gorman |
 | [Ruuvi motion aggregation](projects/03-ruuvi-motion) | Kenny Gorman |
@@ -83,7 +84,10 @@ database, and `CLEANUP=true`. Adjust `PROVIDER`, `REGION`, `TIER`, and
 
 ## Choose a Workflow
 
-- **Learn the core:** follow laboratories 01, 02, and 03 in order.
+- **Prepare once:** complete laboratory 00 and validate the shared workspace,
+  connections, permissions, and cluster.
+- **Learn the core:** follow laboratories 01, 02, and 03 in order; create and
+  inspect documents in the cluster from the pipeline exercises.
 - **Inspect operations:** use 07 for state, counters, samples, sink delivery,
   DLQ, and logs; then use 08 first with Sample and next with the reproducible
   Change Stream mode.
