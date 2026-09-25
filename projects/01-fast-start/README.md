@@ -39,9 +39,16 @@ sample_stream_solar
 
 ## Preparacion
 
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Si todavía no existe el workspace o alguna conexión, sigue primero el
 [manual de infraestructura del laboratorio 00](../00-assessment/MANUAL.md).
 Aquí no se crean clusters, usuarios ni workspaces.
+
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
 
 El workspace de Stream Processing suele incluir la conexion `Sample`
 `sample_stream_solar`. Si no aparece en `sp.listConnections()`, registrala

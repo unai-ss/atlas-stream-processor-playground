@@ -1,6 +1,6 @@
 const database = db.getSiblingDB("playground");
-const runId = "run-001";
-const eventCount = 100;
+const runId = typeof SEED_RUN_ID === "string" ? SEED_RUN_ID : "run-001";
+const eventCount = Number.isInteger(SEED_EVENT_COUNT) ? SEED_EVENT_COUNT : 100;
 const entities = ["sensor-a", "sensor-b", "sensor-c", "sensor-d"];
 const startedAt = new Date();
 
@@ -34,3 +34,11 @@ entities.forEach((entityId, index) => {
 });
 
 print(`Updated ${entities.length} events for ${runId}`);
+const finishedAt = new Date();
+printjson({
+  runId,
+  eventCount,
+  startedAt,
+  finishedAt,
+  seedDurationMs: finishedAt.getTime() - startedAt.getTime()
+});

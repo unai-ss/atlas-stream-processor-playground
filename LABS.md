@@ -2,6 +2,24 @@
 
 ## Preparacion comun
 
+Antes de iniciar cualquier laboratorio, asegúrate de haberte registrado desde
+la consola con `atlas auth login` y confirma que la sesión está activa:
+
+```bash
+atlas auth whoami
+```
+
+Si la sesión ha caducado, ejecuta de nuevo `atlas auth login`.
+
+Antes de conectarte al cluster en cualquier laboratorio, ejecuta desde la raíz:
+
+```bash
+source .env
+./scripts/validate-atlas-connection.sh
+```
+
+Esto detecta hostnames antiguos si el cluster se ha recreado.
+
 1. Crea un Stream Processing Instance dedicado en Atlas.
 2. Crea una conexion Atlas llamada `atlas_lab` apuntando al cluster de prueba.
 3. Entra con `mongosh` al endpoint del Stream Processing Instance.

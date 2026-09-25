@@ -9,6 +9,13 @@ y los publica en Kinesis usando `device_id` como clave de particion.
 
 ## Preparacion
 
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
+
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 1. Crea una conexion `atlas_lab` apuntando al cluster de prueba.
 2. Crea un stream Kinesis y una conexion Atlas llamada `kinesis_lab` con region, stream y role IAM configurados.
 3. Inserta documentos en `playground.device_events` con `device_id`, `timestamp` y `obs.watts` / `obs.temp`.

@@ -4,6 +4,9 @@
 > actual usa [MANUAL.md](MANUAL.md) y crea la infraestructura únicamente desde
 > el [laboratorio 00](../00-assessment/MANUAL.md).
 
+Antes de ejecutar comandos Atlas, registra la sesión desde la consola con
+`atlas auth login` y confirma con `atlas auth whoami`.
+
 Este manual permite repetir el laboratorio 02 desde cero usando el proyecto Atlas
 `[redacted]`, el project id configurado en `.env`, un cluster M0 llamado
 `Cluster0` y un workspace ASP llamado `asp-lab02-gcp-us-west1`.

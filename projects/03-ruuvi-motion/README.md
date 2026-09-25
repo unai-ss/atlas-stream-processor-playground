@@ -31,6 +31,13 @@ segundos, sin necesitar hardware BLE real.
 
 ## Preparacion
 
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
+
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Crea `atlas_lab` apuntando al cluster de prueba y prepara la coleccion
 `playground.ruuvi_sensor_data`. Cada documento debe incluir `mac_address`,
 `time` y un valor numerico en `data.acceleration`:

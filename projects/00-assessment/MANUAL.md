@@ -27,6 +27,16 @@ connection strings ni capturas con secretos en tickets, commits o chats.
 
 ## Paso 0: preparar entorno local
 
+Registra primero la sesión del Atlas CLI desde la consola y confirma que está
+activa:
+
+```bash
+atlas auth login
+atlas auth whoami
+```
+
+Si la sesión ha caducado, ejecuta de nuevo `atlas auth login`.
+
 ```bash
 cd [local-repository]
 source .env
@@ -58,6 +68,15 @@ Si la sesion Atlas esta caducada:
 ```bash
 atlas auth login
 ```
+
+Antes de usar `mongosh`, valida que `ATLAS_URI` apunta al cluster actual:
+
+```bash
+./scripts/validate-atlas-connection.sh
+```
+
+Si falla, actualiza el hostname local con el endpoint que muestre el preflight
+y vuelve a ejecutarlo.
 
 ## Paso 1: crear o validar Cluster0 M0
 

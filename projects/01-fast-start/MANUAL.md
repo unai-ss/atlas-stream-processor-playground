@@ -4,6 +4,16 @@ La infraestructura se crea una sola vez en el [manual del laboratorio 00](../00-
 
 ## Prerrequisitos
 
+Registra la sesión del Atlas CLI desde la consola con `atlas auth login` y
+confirma que está activa con `atlas auth whoami`. Si la sesión ha caducado,
+ejecuta de nuevo `atlas auth login`.
+
+Desde la raíz del proyecto, valida la URI antes de conectarte al cluster:
+
+```bash
+./scripts/validate-atlas-connection.sh
+```
+
 Comprueba que existen:
 
 - workspace ASP en estado operativo;

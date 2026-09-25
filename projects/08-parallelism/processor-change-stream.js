@@ -44,8 +44,22 @@ const filterAndProject = [
   {
     $set: {
       etl_stage: "transform",
-      transformed_at: "$$NOW",
-      value_squared: { $multiply: ["$value", "$value"] }
+      value_squared: { $multiply: ["$value", "$value"] },
+      value_cubed: {
+        $multiply: [
+          { $multiply: ["$value", "$value"] },
+          "$value"
+        ]
+      },
+      value_x10: { $multiply: ["$value", 10] },
+      value_plus_offset: { $add: ["$value", 42] },
+      value_score: {
+        $add: [
+          { $multiply: ["$value", "$value"] },
+          { $multiply: ["$value", 10] },
+          42
+        ]
+      }
     }
   }
 ];
@@ -58,6 +72,7 @@ const serialPipeline = [
       connectionName: "atlas_lab",
       db: "playground",
       coll: "parallelism_serial_output",
+      timeseries: { timeField: "observed_at" },
       parallelism: 1
     }
   }
@@ -71,10 +86,24 @@ const parallelPipeline = [
       connectionName: "atlas_lab",
       db: "playground",
       coll: "parallelism_parallel_output",
+      timeseries: { timeField: "observed_at" },
       parallelism: 2
     }
   }
 ];
 
-sp.createStreamProcessor("labParallelismSerial", serialPipeline);
-sp.createStreamProcessor("labParallelismWorkers", parallelPipeline);
+sp.createStreamProcessor("labParallelismSerial", serialPipeline, {
+  dlq: {
+    connectionName: "atlas_lab",
+    db: "playground",
+    coll: "parallelism_serial_dlq"
+  }
+});
+
+sp.createStreamProcessor("labParallelismWorkers", parallelPipeline, {
+  dlq: {
+    connectionName: "atlas_lab",
+    db: "playground",
+    coll: "parallelism_parallel_dlq"
+  }
+});

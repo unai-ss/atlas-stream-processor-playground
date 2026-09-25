@@ -28,6 +28,10 @@ flowchart LR
 
 ## Salida de infraestructura
 
+Antes de crear recursos, registra la sesión del Atlas CLI en la consola con
+`atlas auth login` y compruébala con `atlas auth whoami`. Si la sesión caduca,
+vuelve a ejecutar `atlas auth login`.
+
 Antes de continuar, valida que el entorno común dispone de:
 
 - un cluster Atlas de pruebas y un usuario de base de datos;

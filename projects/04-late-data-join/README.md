@@ -9,6 +9,13 @@ lateness controlada, y repara resultados tardios mediante una coleccion DLQ.
 
 ## Preparacion
 
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
+
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Registra una conexion Kafka llamada `kafka_lab` con los topics `temperature` y `humidity`. Registra `atlas_lab` y crea las colecciones `playground.sensor_weather` y `playground.sensor_dlq`.
 
 Cuando necesites consultar esas colecciones en el cluster Atlas, usa:

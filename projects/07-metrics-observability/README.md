@@ -52,8 +52,15 @@ sample_stream_solar -> processor observable -> metrics_output -> diagnostico gui
 
 ## Preparacion
 
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Prepara primero el entorno común con el [laboratorio 00](../00-assessment/MANUAL.md).
 Este laboratorio no crea clusters, usuarios ni workspaces.
+
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
 
 Necesitas:
 
@@ -173,6 +180,25 @@ Clasifica las observaciones en tres grupos:
    `operatorName`, `errInfo.reason`, `doc` y `_stream_meta`.
 7. No cambies varias cosas a la vez: formula una hipotesis, ejecuta una prueba
    barata y valida si el resultado la confirma.
+
+## Que mirar en las metricas de ASP
+
+En `stats()` interpreta las señales en este orden:
+
+| Metrica | Que indica | Señal esperada |
+|---|---|---|
+| `state` | Salud del processor | `STARTED` |
+| `inputMessageCount` | Mensajes recibidos desde la fuente | Aumenta cuando llega actividad |
+| `outputMessageCount` | Mensajes que completan el pipeline | Aumenta junto con el sink |
+| `dlqMessageCount` | Mensajes que fallaron | `0` en una ejecución correcta |
+| `lastMessageIn` | Momento del último evento recibido | Debe avanzar con nueva actividad |
+| `lastCheckpointSave` | Progreso persistido del source | Debe avanzar después de procesar |
+| `throttle.throttleEvents` | Eventos limitados por capacidad | `0` o crecimiento justificado |
+| `memoryUsageBytes` | Memoria usada por el processor | Observar tendencia, no un valor aislado |
+
+No confundas un processor `STARTED` con un pipeline correcto: puede estar
+activo y enviar todos los eventos al DLQ. Compara siempre entrada, salida, DLQ y
+sink como un conjunto.
 
 ## Criterio de linea base
 

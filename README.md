@@ -51,6 +51,15 @@ the referenced authors' work.
 
 ## Setup
 
+Antes de ejecutar cualquier comando de Atlas, asegúrate de haberte registrado
+en la consola con `atlas auth login` y confirma la sesión con:
+
+```bash
+atlas auth whoami
+```
+
+Si la sesión ha caducado, vuelve a ejecutar `atlas auth login`.
+
 ```bash
 cp .env.example .env
 source .env
@@ -63,6 +72,16 @@ mongosh --version
 The required Atlas permissions include the ability to manage Stream Processing workspaces, connections, and processors, plus database permissions to create and query the test sink collection.
 
 For the complete CLI workflow, see [ASP_OPERATIONS_GUIDE.md](ASP_OPERATIONS_GUIDE.md). It covers workspace creation, connections, time-series sink preparation, processor lifecycle, operational logs, validation, and cleanup.
+
+Antes de usar cualquier `ATLAS_URI`, ejecuta el preflight común:
+
+```bash
+source .env
+./scripts/validate-atlas-connection.sh
+```
+
+El preflight detecta si el cluster se recreó y la URI local conserva un
+hostname antiguo.
 
 Known limitations and the recommended work order are tracked in [LIMITATIONS.md](LIMITATIONS.md).
 

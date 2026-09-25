@@ -22,11 +22,17 @@ produccion ni guardes contrasenas, URIs o evidencias sin redactar en Git.
 | Coleccion de entrada | `playground.parallelism_input` |
 | Salida serial | `playground.parallelism_serial_output` |
 | Salida paralela | `playground.parallelism_parallel_output` |
+| DLQ serial | `playground.parallelism_serial_dlq` |
+| DLQ paralelo | `playground.parallelism_parallel_dlq` |
 | Processor serial | `labParallelismSerial` |
 | Processor paralelo | `labParallelismWorkers` |
 | Lote inicial | `run-001`, 100 inserciones y 4 actualizaciones |
 
 ## Paso 0: preparar el entorno
+
+Registra la sesión del Atlas CLI desde la consola con `atlas auth login` y
+confirma que está activa con `atlas auth whoami`. Si la sesión ha caducado,
+ejecuta de nuevo `atlas auth login`.
 
 ```bash
 cd [local-repository]
@@ -47,6 +53,12 @@ crea ni elimina infraestructura compartida.
 Este manual usa el mismo workspace y cluster de pruebas que el resto del
 playground. No imprime ni modifica credenciales.
 
+Desde la raíz del proyecto, valida la URI antes de conectarte al cluster:
+
+```bash
+./scripts/validate-atlas-connection.sh
+```
+
 ## Paso 1: limpiar una ejecucion anterior
 
 En una sesion `mongosh` conectada al cluster Atlas:
@@ -57,6 +69,11 @@ use playground
 db.parallelism_input.deleteMany({})
 db.parallelism_serial_output.deleteMany({})
 db.parallelism_parallel_output.deleteMany({})
+db.parallelism_serial_dlq.deleteMany({})
+db.parallelism_parallel_dlq.deleteMany({})
+
+db.createCollection("parallelism_serial_dlq")
+db.createCollection("parallelism_parallel_dlq")
 ```
 
 En otra sesion `mongosh`, conectada al hostname del workspace ASP, detén y
@@ -117,6 +134,31 @@ sp.labParallelismSerial.sample()
 sp.labParallelismWorkers.sample()
 ```
 
+## Metricas que debes registrar
+
+Para cada processor y para cada tamaño de lote, anota estos valores de
+`stats()`:
+
+| Metrica | Interpretacion |
+|---|---|
+| `state` | Debe ser `STARTED` antes y durante la prueba. |
+| `inputMessageCount` | Confirma que el Change Stream recibió los cambios. |
+| `outputMessageCount` | Confirma que los eventos completaron el pipeline. |
+| `dlqMessageCount` | Debe ser `0`; si aumenta, consulta el namespace DLQ. |
+| `lastMessageIn` | Marca cuándo llegó el último cambio. |
+| `lastCheckpointSave` | Indica que el progreso del source se guardó. |
+| `throttle.throttleEvents` | Señala limitación de capacidad o backpressure. |
+| `memoryUsageBytes` | Permite observar crecimiento de memoria con el volumen. |
+
+La lectura mínima correcta es:
+
+```text
+STARTED + input creciente + output creciente + DLQ 0
+```
+
+Un processor puede estar `STARTED` y aun así ser incorrecto si
+`outputMessageCount` permanece en cero o `dlqMessageCount` aumenta.
+
 En el cluster Atlas:
 
 ```javascript
@@ -139,19 +181,165 @@ db.parallelism_parallel_output
 ```
 
 La expectativa educativa es observar 104 cambios por salida: 100 inserciones y
-4 actualizaciones. Comprueba también que `value_squared` coincide con `value`
-y que `change_version: 2` aparece para las cuatro entidades.
+4 actualizaciones. Comprueba también que `value_squared`, `value_cubed`,
+`value_x10`, `value_plus_offset` y `value_score` son coherentes con `value`, y
+que `change_version: 2` aparece para las cuatro entidades.
+
+Comprueba que no hubo errores:
+
+```javascript
+db.parallelism_serial_dlq.countDocuments()
+db.parallelism_parallel_dlq.countDocuments()
+```
+
+Ambos valores deben ser `0`. Si alguno es mayor que cero, revisa un documento
+con `findOne()` y busca `errInfo.reason`, `operatorName` y `doc`.
 
 El resultado demuestra que ambos processors pueden recibir el mismo flujo de
 cambios. No demuestra que `$emit.parallelism: 2` sea siempre más rápido ni que
 conserve orden global. El rendimiento depende del workspace, la red, el sink y
 el volumen.
 
-## Paso 5: repetir el experimento
+La transformación usa varias operaciones aritméticas deterministas para dar
+más trabajo al `SetOperator`. No usa `$$NOW` ni otras expresiones no soportadas
+por este entorno ASP. Compara `SetOperator` y `TimeseriesEmitOperator` en
+`operatorStats`: si domina `SetOperator`, la carga está en la transformación;
+si domina `TimeseriesEmitOperator`, el cuello de botella está en el sink.
 
-Para cambiar el tamaño del lote, edita temporalmente `eventCount` y `runId` en
-`[08-seed-parallelism.js](../../scripts/08-seed-parallelism.js)`. Usa un `runId`
-distinto en cada ejecución y limpia las colecciones antes de repetirla.
+## Paso 5: comparar tres tamaños
+
+El seeder acepta `SEED_EVENT_COUNT` y `SEED_RUN_ID`, por lo que no necesitas
+editar el archivo. Ejecuta cada tamaño en el cluster Atlas, con los processors
+activos:
+
+Antes de empezar una nueva comparación, limpia una vez los datos de ejecuciones
+anteriores. No ejecutes esta limpieza entre los tres tamaños:
+
+```javascript
+use playground
+db.parallelism_input.deleteMany({})
+db.parallelism_serial_output.deleteMany({})
+db.parallelism_parallel_output.deleteMany({})
+db.parallelism_serial_dlq.deleteMany({})
+db.parallelism_parallel_dlq.deleteMany({})
+```
+
+```javascript
+SEED_EVENT_COUNT = 100
+SEED_RUN_ID = "run-100"
+load("[local-repository]/scripts/08-seed-parallelism.js")
+```
+
+```javascript
+SEED_EVENT_COUNT = 1000
+SEED_RUN_ID = "run-1000"
+load("[local-repository]/scripts/08-seed-parallelism.js")
+```
+
+```javascript
+SEED_EVENT_COUNT = 5000
+SEED_RUN_ID = "run-5000"
+load("[local-repository]/scripts/08-seed-parallelism.js")
+```
+
+Cada lote genera además cuatro actualizaciones, así que los cambios esperados
+son 104, 1.004 y 5.004 respectivamente. Usa un `run_id` distinto y no limpies
+la entrada entre lotes; así puedes comparar las ejecuciones en las mismas
+colecciones. El seeder imprime `startedAt`, `finishedAt` y
+`seedDurationMs`; anótalos junto con una marca local del momento en que cada
+processor alcanza el contador esperado.
+
+Puedes tomar la marca local en la consola del cluster antes y después de la
+consulta de cada salida:
+
+```javascript
+const measuredAt = new Date();
+printjson({ measuredAt });
+```
+
+Para una medición aproximada del procesamiento, registra:
+
+```text
+localStartAt       = momento justo antes de cargar el seeder
+localInputFinished = finishedAt que imprime el seeder
+localSerialDone    = momento en que la salida serial alcanza expected
+localParallelDone  = momento en que la salida paralela alcanza expected
+```
+
+Calcula por separado:
+
+```text
+seedDuration       = finishedAt - startedAt
+serialEndToEnd     = localSerialDone - localStartAt
+parallelEndToEnd   = localParallelDone - localStartAt
+serialDrainTime    = localSerialDone - localInputFinished
+parallelDrainTime  = localParallelDone - localInputFinished
+```
+
+Estas son mediciones locales educativas, no métricas oficiales de latencia de
+Atlas. Usa el mismo equipo, workspace, región y orden de ejecución para que la
+comparación sea razonable.
+
+Consulta el resumen después de que el procesamiento termine:
+
+```javascript
+[
+  { run_id: "run-100", expected: 104 },
+  { run_id: "run-1000", expected: 1004 },
+  { run_id: "run-5000", expected: 5004 }
+].forEach(({ run_id, expected }) => {
+  printjson({
+    run_id,
+    expected,
+    serial: db.parallelism_serial_output.countDocuments({ run_id }),
+    parallel: db.parallelism_parallel_output.countDocuments({ run_id })
+  });
+});
+```
+
+Calcula el throughput de cada salida con:
+
+```text
+throughput = eventos procesados / segundos hasta alcanzar el contador esperado
+```
+
+Compara siempre en este orden: resultados correctos, errores DLQ y finalmente
+throughput. No uses solo la duración del seeder, porque mide la escritura de
+entrada y no el tiempo completo del procesamiento ASP.
+
+### Nota de la prueba realizada
+
+En este entorno, los lotes pequeños de 100 y 1.000 eventos sirvieron para
+validar la corrección, pero no mostraron una diferencia clara de rendimiento.
+El lote de 5.000 fue el primero suficientemente grande para hacer visible la
+diferencia: el processor con `parallelism: 2` alcanzó antes los `5.004` cambios,
+mientras el processor con `parallelism: 1` todavía estaba drenando eventos.
+
+La observación depende del tier, región, sink y carga del workspace; no es un
+benchmark universal.
+
+Consulta el resumen:
+
+```javascript
+use playground
+
+[
+  { run_id: "run-100", expected: 104 },
+  { run_id: "run-1000", expected: 1004 },
+  { run_id: "run-5000", expected: 5004 }
+].forEach(({ run_id, expected }) => {
+  printjson({
+    run_id,
+    expected,
+    serial: db.parallelism_serial_output.countDocuments({ run_id }),
+    parallel: db.parallelism_parallel_output.countDocuments({ run_id })
+  });
+});
+```
+
+Registra la hora de inicio y fin de cada carga para calcular el throughput de
+cada processor. Compara primero que los resultados sean correctos y después el
+rendimiento; un lote pequeño puede no mostrar ninguna ventaja.
 
 Registra como mínimo:
 
@@ -163,6 +351,23 @@ Registra como mínimo:
 | Duración | Hora de inicio y fin del seeder |
 | Throughput aproximado | Eventos de salida dividido por duración |
 | Orden | Comparación por `entity_id` y `sequence` |
+
+Para comparar rendimiento, registra también `lastMessageIn` y la hora en la
+que cada salida alcanza su contador esperado. Calcula el throughput de cada
+processor con el mismo intervalo de medición:
+
+```text
+throughput = eventos de salida / segundos transcurridos
+```
+
+Observa estas tendencias:
+
+- `inputMessageCount` debe aumentar de forma parecida en ambos processors;
+- `outputMessageCount` debe alcanzar el mismo total esperado;
+- `dlqMessageCount` debe permanecer en cero;
+- `throttleEvents` puede explicar por qué añadir workers no mejora el tiempo;
+- `memoryUsageBytes` puede crecer con lotes mayores;
+- `lastCheckpointSave` debe avanzar mientras el source progresa.
 
 ## Diagnóstico rápido
 
@@ -192,6 +397,8 @@ use playground
 db.parallelism_input.drop()
 db.parallelism_serial_output.drop()
 db.parallelism_parallel_output.drop()
+db.parallelism_serial_dlq.drop()
+db.parallelism_parallel_dlq.drop()
 ```
 
 No elimines el workspace ni el cluster compartido desde este manual salvo que

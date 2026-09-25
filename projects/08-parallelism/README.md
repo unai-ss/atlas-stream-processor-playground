@@ -50,7 +50,7 @@ Las tres fases pueden aprovechar paralelismo, pero no se configuran igual:
 | Fase ETL | Que se paraleliza | Como se observa en este laboratorio |
 |---|---|---|
 | Extraccion | Lectura de eventos generados por Sample | Sample no ofrece aqui particiones ni volumen controlado |
-| Transformacion | Aplicacion de filtros y calculos sobre eventos independientes | Cada evento recibe `value_squared` y `transformed_at` |
+| Transformacion | Aplicacion de filtros y calculos sobre eventos independientes | Cada evento recibe `value_squared` y `etl_stage` |
 | Carga | Escrituras concurrentes hacia el sink | `$emit` usa `parallelism: 1` frente a `parallelism: 2` |
 
 En Atlas Stream Processing, `$emit.parallelism` es la configuracion visible de
@@ -61,8 +61,15 @@ particiones ni identifica el worker fisico.
 
 ## Preparacion
 
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Prepara primero el entorno común con el [laboratorio 00](../00-assessment/MANUAL.md).
 Este laboratorio no crea clusters, usuarios ni workspaces.
+
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
 
 Para el modo Change Stream, sigue el [manual operativo](MANUAL.md): detiene
 processors anteriores y limpia solo las colecciones de este laboratorio antes
@@ -76,7 +83,9 @@ Necesitas:
 - la conexion Sample `sample_stream_solar` para el modo introductorio;
 - la coleccion `playground.parallelism_input` para el modo Change Stream;
 - las colecciones `playground.parallelism_serial_output` y
-  `playground.parallelism_parallel_output`.
+  `playground.parallelism_parallel_output`;
+- las colecciones DLQ `playground.parallelism_serial_dlq` y
+  `playground.parallelism_parallel_dlq`.
 
 En el modo Sample, los documentos transformados usan estos campos de
 referencia:
@@ -254,6 +263,8 @@ use playground
 db.parallelism_input.deleteMany({})
 db.parallelism_serial_output.deleteMany({})
 db.parallelism_parallel_output.deleteMany({})
+db.parallelism_serial_dlq.deleteMany({})
+db.parallelism_parallel_dlq.deleteMany({})
 ```
 
 En el workspace ASP, si ya ejecutaste el modo Sample, detén y elimina sus
@@ -272,6 +283,21 @@ sp.labParallelismWorkers.stats()
 ```
 
 Los dos processors deben mostrar `state: "STARTED"` antes de insertar datos.
+
+Cada processor tiene un DLQ Atlas independiente:
+
+| Processor | Namespace DLQ |
+|---|---|
+| `labParallelismSerial` | `playground.parallelism_serial_dlq` |
+| `labParallelismWorkers` | `playground.parallelism_parallel_dlq` |
+
+Si las colecciones DLQ no existen, créalas antes de arrancar los processors:
+
+```javascript
+use playground
+db.createCollection("parallelism_serial_dlq")
+db.createCollection("parallelism_parallel_dlq")
+```
 
 ### Insertar el lote controlado
 
@@ -299,6 +325,19 @@ La expectativa educativa es observar 104 cambios por sink: 100 inserciones y
 4 actualizaciones. La comparación debe revisar también `value`,
 `value_squared` y `change_version`, no solamente el contador.
 
+Comprueba también los DLQ:
+
+```javascript
+db.parallelism_serial_dlq.countDocuments()
+db.parallelism_parallel_dlq.countDocuments()
+db.parallelism_serial_dlq.findOne()
+db.parallelism_parallel_dlq.findOne()
+```
+
+En una ejecución correcta, ambos contadores deben ser `0`. Si hay errores,
+revisa `errInfo.reason`, `operatorName`, `doc` y `_stream_meta` en el documento
+DLQ correspondiente.
+
 Este modo permite estudiar de forma controlada duplicados, actualizaciones y
 secuencias. No convierte `$emit.parallelism` en una garantía de orden: la
 corrección del resultado y el orden deben comprobarse por separado.
@@ -319,6 +358,29 @@ anota el momento de inicio y fin:
 
 Compara solo tendencias dentro del mismo workspace. No presentes el resultado
 como una garantia de rendimiento para otros tiers, regiones o destinos.
+
+Para el modo Change Stream, la comparación reproducible de volumen está en el
+[manual operativo](MANUAL.md): ejecuta los lotes `run-100`, `run-1000` y
+`run-5000` con `SEED_EVENT_COUNT` y `SEED_RUN_ID`, y compara ambas salidas por
+`run_id`.
+
+En cada tamaño registra en `stats()` `state`, `inputMessageCount`,
+`outputMessageCount`, `dlqMessageCount`, `lastMessageIn`,
+`lastCheckpointSave`, `throttle.throttleEvents` y `memoryUsageBytes`. La señal
+de éxito es `STARTED`, entrada y salida crecientes, DLQ en cero y checkpoints
+avanzando. Solo después compara throughput entre `parallelism: 1` y `2`.
+
+Nota de esta ejecución educativa: 100 y 1.000 eventos fueron suficientes para
+validar resultados, pero solo 5.000 eventos mostraron una diferencia visible de
+drenaje entre `parallelism: 1` y `parallelism: 2`. Con 5.000, el processor
+paralelo alcanzó antes el total esperado, mientras el serial aún procesaba
+eventos. El resultado depende de la capacidad disponible y no constituye un
+benchmark universal.
+
+El seeder también imprime marcas locales `startedAt`, `finishedAt` y
+`seedDurationMs`. Combínalas con el momento local en que cada sink alcanza su
+contador esperado para separar el tiempo de escritura de entrada del tiempo de
+vaciar el pipeline. Son mediciones educativas, no latencia oficial de Atlas.
 
 ## Fase 4: limites del experimento
 
@@ -394,6 +456,8 @@ En el cluster Atlas:
 use playground
 db.parallelism_serial_output.drop()
 db.parallelism_parallel_output.drop()
+db.parallelism_serial_dlq.drop()
+db.parallelism_parallel_dlq.drop()
 ```
 
 ## Documentacion relacionada

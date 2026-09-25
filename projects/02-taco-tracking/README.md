@@ -36,8 +36,15 @@ ultima posicion conocida de cada entrega.
 
 ## Preparacion
 
+Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
+sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
+`atlas auth login`.
+
 Comprueba primero la infraestructura del [laboratorio 00](../00-assessment/MANUAL.md).
 No repitas aquí la creación del cluster, el usuario ni el workspace.
+
+Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
+desde la raíz del proyecto para detectar un hostname antiguo.
 
 Necesitas:
 

@@ -6,6 +6,16 @@ It is written for a dedicated Atlas test project. Do not run it against producti
 
 ## 1. Required Tools
 
+Antes de continuar, registra la sesión del Atlas CLI desde la consola y
+confírmala sin mostrar credenciales:
+
+```bash
+atlas auth login
+atlas auth whoami
+```
+
+Si la sesión ha caducado, vuelve a ejecutar `atlas auth login`.
+
 Install and verify:
 
 ```bash
@@ -55,6 +65,15 @@ Check access without printing the connection string:
 printf 'PROJECT_ID=%s\nCLUSTER_NAME=%s\nTIER=%s\n' "$PROJECT_ID" "$CLUSTER_NAME" "$TIER"
 atlas clusters list --projectId "$PROJECT_ID" --output json
 ```
+
+Antes de usar `mongosh`, valida que `ATLAS_URI` apunta al cluster actual:
+
+```bash
+./scripts/validate-atlas-connection.sh
+```
+
+Si falla, actualiza solo el hostname local con el endpoint actual que muestre
+el preflight y vuelve a ejecutarlo.
 
 ## 3. Define the Workspace
 
