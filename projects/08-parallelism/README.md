@@ -5,7 +5,9 @@ comparar una salida serial con salidas paralelas. No es un benchmark oficial:
 es un experimento controlado sobre capacidad, resultados y riesgos de orden.
 
 Completa primero [laboratorio 07](../07-metrics-observability), que proporciona
-la linea base de estado, `stats()`, `sample()` y validacion del sink.
+la linea base de estado, `stats()`, `sample()` y validacion del sink. El
+recorrido principal de este lab es Change Stream con una transformación
+matemática más costosa para observar el operador `SetOperator` y el sink.
 
 El procedimiento operativo completo del modo reproducible esta en
 [MANUAL.md](MANUAL.md).
@@ -14,13 +16,12 @@ El laboratorio ofrece dos modos:
 
 | Modo | Processor | Proposito |
 |---|---|---|
-| Introductorio | `processor.js` | Observar Sample y comparar la carga sin preparar datos. |
-| Reproducible | `processor-change-stream.js` | Comparar los mismos eventos con Change Streams. |
+| Principal | `processor-change-stream.js` | Comparar la transformación matemática y el sink con eventos controlados. |
+| Introducción opcional | `processor.js` | Observar Sample y el ciclo básico del processor. |
 
-Empieza con el modo Sample. Usa el modo Change Stream cuando quieras controlar
-el lote, repetir una ejecucion y estudiar secuencias, actualizaciones y orden.
-No cargues los dos modos al mismo tiempo porque crean processors con los mismos
-nombres.
+Usa primero el modo Change Stream para el experimento medible. El modo Sample
+es una introducción breve y opcional. No cargues ambos modos al mismo tiempo
+porque crean processors con los mismos nombres.
 
 ## Objetivo
 
@@ -39,10 +40,10 @@ Al terminar, deberias poder:
 
 ```mermaid
 flowchart LR
-    A[sample_stream_solar] --> B[Transformacion<br/>por evento]
-    B --> C[Carga<br/>emit paralelo]
-    A --> D[device_id como entidad de referencia]
-    D --> C
+    A[parallelism_input Change Stream] --> B[Validar y proyectar]
+    B --> C[SetOperator<br/>20 rondas matemáticas]
+    C --> D[$emit parallelism 1 o 2]
+    D --> E[colecciones de salida]
 ```
 
 Las tres fases pueden aprovechar paralelismo, pero no se configuran igual:

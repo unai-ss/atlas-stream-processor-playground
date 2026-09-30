@@ -1,8 +1,9 @@
 # Manual laboratorio 08: paralelismo reproducible con Change Stream
 
-Este manual ejecuta el modo reproducible del laboratorio 08. A diferencia del
-modo Sample, escribe un lote controlado en `playground.parallelism_input` y
-hace que dos processors lean los mismos cambios:
+Este manual ejecuta el recorrido principal del laboratorio 08: un Change Stream
+controlado y una transformación matemática deliberadamente más costosa. Ambos
+processors leen los mismos cambios y aplican 20 rondas aritméticas en
+`SetOperator`; solo cambia el paralelismo de `$emit`:
 
 ```text
 parallelism_input Change Stream
@@ -10,6 +11,9 @@ parallelism_input Change Stream
         |
         +-----------------> labParallelismWorkers -> parallelism: 2
 ```
+
+    El modo Sample de `processor.js` queda como introducción opcional y no forma
+    parte de la comparación principal.
 
 Usa un proyecto Atlas de pruebas. No ejecutes el laboratorio contra datos de
 produccion ni guardes contrasenas, URIs o evidencias sin redactar en Git.
