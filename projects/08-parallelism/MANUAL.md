@@ -106,6 +106,12 @@ Los dos processors deben estar en estado `STARTED` antes de insertar datos.
 Arrancarlos antes es esencial: los cambios anteriores al inicio no forman
 parte de la comparacion reproducible.
 
+La variante de transformación actual añade 20 rondas aritméticas dependientes
+del valor (`multiplicar por 2 y sumar el índice de ronda`). El resultado queda
+en `transform_work`; no se conservan los intermediarios para evitar aumentar el
+tamaño del documento de salida. Al cambiar esta definición, elimina y recrea
+los processors para que ASP cargue el pipeline nuevo.
+
 ## Paso 3: insertar el lote controlado
 
 En la sesion conectada al cluster Atlas, ejecuta:
@@ -158,6 +164,29 @@ STARTED + input creciente + output creciente + DLQ 0
 
 Un processor puede estar `STARTED` y aun así ser incorrecto si
 `outputMessageCount` permanece en cero o `dlqMessageCount` aumenta.
+
+## Observar métricas cada 30 segundos
+
+En Atlas UI, abre **Stream Processing > Monitoring**, selecciona ambos
+processors y limita el intervalo de tiempo a la prueba. Si el menú
+**Granularity** ofrece `30 seconds`, selecciónalo. Si no ofrece exactamente
+30 segundos, no asumas esa granularidad: toma snapshots de `stats()` a mano o
+consulta la Admin API cada 30 segundos desde una terminal.
+
+Registra en cada snapshot:
+
+```text
+hora local, processor, inputMessageCount, outputMessageCount,
+backlog (input - output), dlqMessageCount,
+SetOperator p50/p99, TimeseriesEmitOperator p50/p99,
+throttleEvents, memoryUsageBytes
+```
+
+Compara la pendiente de `SetOperator` con la de `TimeseriesEmitOperator`.
+Si sube el coste de `SetOperator`, la transformación está ocupando más tiempo;
+si domina `TimeseriesEmitOperator`, el sink sigue siendo el cuello de botella.
+Una granularidad de 30 segundos permite ver tendencias, pero puede ocultar
+picos que ocurren entre muestras.
 
 En el cluster Atlas:
 

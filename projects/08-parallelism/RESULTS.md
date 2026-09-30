@@ -11,8 +11,11 @@ sink Atlas, la carga previa y el momento de la medicion.
 
 ## Variante de transformacion pesada
 
-La versión actual del processor Change Stream calcula varios campos
-deterministas por evento:
+La versión actual del processor Change Stream ejecuta veinte rondas aritméticas
+dependientes de `value` y conserva solo el resultado `transform_work`. La
+recurrencia de cada ronda es `resultado_anterior * 2 + número_de_ronda`.
+
+Las salidas también conservan estos campos derivados básicos:
 
 ```text
 value_squared
@@ -36,6 +39,11 @@ TimeseriesEmitOperator.latency.p50 / latency.p99
 Si sigue dominando `TimeseriesEmitOperator`, el sink es el cuello de botella.
 Si domina `SetOperator`, el paralelismo tiene más margen para mostrar una
 diferencia de capacidad.
+
+Para inspeccionar tendencias, utiliza una ventana de 30 segundos en Atlas UI
+si aparece en **Granularity**. Si no está disponible, toma snapshots de
+`stats()` cada 30 segundos y compara backlog y latencia. Esa cadencia muestra
+tendencias, no picos subsegundo ni una garantía de muestreo exacto.
 
 ## Criterio principal
 

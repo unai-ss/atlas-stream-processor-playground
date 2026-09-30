@@ -64,9 +64,28 @@ const filterAndProject = [
   }
 ];
 
+let transformWorkExpression = "$value";
+for (let step = 1; step <= 20; step += 1) {
+  transformWorkExpression = {
+    $add: [
+      { $multiply: [transformWorkExpression, 2] },
+      step
+    ]
+  };
+}
+
+const transformPipeline = [
+  ...filterAndProject,
+  {
+    $set: {
+      transform_work: transformWorkExpression
+    }
+  }
+];
+
 const serialPipeline = [
   source,
-  ...filterAndProject,
+  ...transformPipeline,
   {
     $emit: {
       connectionName: "atlas_lab",
@@ -80,7 +99,7 @@ const serialPipeline = [
 
 const parallelPipeline = [
   source,
-  ...filterAndProject,
+  ...transformPipeline,
   {
     $emit: {
       connectionName: "atlas_lab",

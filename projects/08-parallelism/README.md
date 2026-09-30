@@ -364,11 +364,21 @@ Para el modo Change Stream, la comparación reproducible de volumen está en el
 `run-5000` con `SEED_EVENT_COUNT` y `SEED_RUN_ID`, y compara ambas salidas por
 `run_id`.
 
+La variante de transformación pesada calcula 20 rondas aritméticas encadenadas
+por evento y conserva el resultado en `transform_work`. Recrea los processors
+después de cambiar el archivo para que ASP aplique la definición nueva.
+
 En cada tamaño registra en `stats()` `state`, `inputMessageCount`,
 `outputMessageCount`, `dlqMessageCount`, `lastMessageIn`,
 `lastCheckpointSave`, `throttle.throttleEvents` y `memoryUsageBytes`. La señal
 de éxito es `STARTED`, entrada y salida crecientes, DLQ en cero y checkpoints
 avanzando. Solo después compara throughput entre `parallelism: 1` y `2`.
+
+Para la vista temporal, en **Stream Processing > Monitoring** selecciona los
+processors y el intervalo de la prueba. Usa granularidad de 30 segundos si está
+disponible; si Atlas UI no ofrece exactamente ese intervalo, captura snapshots
+de `stats()` cada 30 segundos. Enfócate en `SetOperator` frente a
+`TimeseriesEmitOperator` y calcula el backlog en cada snapshot.
 
 Nota de esta ejecución educativa: 100 y 1.000 eventos fueron suficientes para
 validar resultados, pero solo 5.000 eventos mostraron una diferencia visible de
