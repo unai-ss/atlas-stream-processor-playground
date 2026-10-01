@@ -15,7 +15,7 @@ in the cluster.
 The assessment uses a dedicated Atlas project and isolated resource names. It
 does not use customer data, credentials stored in files, or production resources.
 
-## Como funciona
+## How It Works
 
 ```mermaid
 flowchart LR
@@ -85,12 +85,12 @@ The runner must execute these phases without interactive prompts:
 1. Validate tools, configuration, and the test project.
 2. Generate unique names for workspaces, connections, processors, and collections.
 3. Prepare fixtures and scenario connections.
-4. Crear y arrancar el processor del evaluado.
-5. Generar eventos de entrada de forma determinista.
-6. Esperar una condicion de salida con timeout.
-7. Consultar estado, contadores, salida y DLQ.
-8. Evaluar assertions y guardar un informe redactado.
-9. Detener y eliminar todos los recursos creados.
+4. Create and start the submitted processor.
+5. Generate input events deterministically.
+6. Wait for an output condition, with a timeout.
+7. Query processor state, counters, output, and DLQ.
+8. Evaluate assertions and save a redacted report.
+9. Stop and remove all resources created for the run.
 
 The default mode must be `CLEANUP=true`. An inspection mode may retain resources
 only when explicitly requested.
@@ -99,10 +99,10 @@ only when explicitly requested.
 
 A scenario passes only when:
 
-- el processor se crea y alcanza el estado esperado;
-- procesa al menos los eventos minimos del fixture;
-- escribe la salida en el namespace correcto;
-- respeta la forma y los tipos de datos esperados;
+- the processor is created and reaches the expected state;
+- it processes at least the minimum number of fixture events;
+- it writes output to the correct namespace;
+- it follows the expected data structure and types;
 - does not require manual changes during execution;
 - completes without unexpected errors or leftover resources after cleanup.
 

@@ -280,7 +280,7 @@ sp.labParallelismWorkers.stats()
 
 Both processors must show `state: "STARTED"` before data is inserted.
 
-Cada processor tiene un DLQ Atlas independiente:
+Each processor has a separate Atlas DLQ:
 
 | Processor | Namespace DLQ |
 |---|---|

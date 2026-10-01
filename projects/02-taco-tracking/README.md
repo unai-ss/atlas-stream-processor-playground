@@ -19,10 +19,10 @@ the latest known position for each delivery.
 ## ASP Concepts
 
 - `$source` with an Atlas connection and Change Streams;
-- `fullDocument: "updateLookup"` para recuperar el documento posterior en
-	eventos `update`;
+- `fullDocument: "updateLookup"` to retrieve the post-update document for
+  `update` events;
 - filtering `insert`, `update`, and `replace` operations;
-- ventanas `$tumblingWindow`;
+- `$tumblingWindow` windows;
 - selecting the latest event with `$top`;
 - `$merge` to maintain one view per `delivery_id`.
 

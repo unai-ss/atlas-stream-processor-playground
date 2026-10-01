@@ -6,7 +6,7 @@ state, the documents flowing through the pipeline, and the Atlas sink.
 Learn to interpret `stats()`, `sample()`, processor state, Atlas output, and
 DLQ/log signals to diagnose Atlas Stream Processing issues.
 
-Documentacion oficial relacionada:
+Related official documentation:
 
 - https://www.mongodb.com/docs/atlas/atlas-stream-processing/monitoring
 - https://www.mongodb.com/docs/atlas/atlas-stream-processing/quickstart
@@ -24,8 +24,8 @@ diagnostic signals.
 
 ## ASP Concepts
 
-- `sp.listStreamProcessors()` para confirmar existencia del processor;
-- `sp.<processor>.stats()` para leer estado y actividad operacional;
+- `sp.listStreamProcessors()` to confirm that the processor exists;
+- `sp.<processor>.stats()` to review processor state and operational activity;
 - `sp.<processor>.sample()` to inspect documents processed in real time;
 - comparison of source events, samples, and persisted sink output;
 - filters that discard Sample events without the expected fields;
@@ -40,7 +40,7 @@ flowchart LR
    B --> C[Filter valid events]
     C --> D[Add processed_at]
     D --> E[metrics_output]
-    B --> F[stats y sample]
+   B --> F[stats and sample]
    C --> G[Discard hypothesis]
 ```
 

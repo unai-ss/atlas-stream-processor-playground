@@ -55,13 +55,12 @@ before continuing.
 
 You will need:
 
-- un Stream Processing Workspace de pruebas;
-- acceso a ese workspace con `mongosh`;
-- `mongosh` version 2.0 o posterior;
+- a test Stream Processing workspace;
+- `mongosh` access to that workspace;
+- `mongosh` version 2.0 or later;
 - an Atlas connection named `atlas_lab`;
 - the `playground.fast_start_events` collection configured as a time-series
-	collection with
-	`timestamp` como `timeField`.
+  collection with `timestamp` as its `timeField`.
 
 To access the Atlas cluster, use the URI that already contains the credentials
 for `stream[redacted]`:
@@ -115,7 +114,7 @@ load("[local-repository]/projects/01-fast-start/processor.js")
 
 The file creates `labFastStart` with these stages:
 
-1. `$source` lee `sample_stream_solar`.
+1. `$source` reads from `sample_stream_solar`.
 2. `$set` converts the Sample ISO timestamp to a date and uses a fixed fallback
    only when the value is missing or cannot be converted.
 3. `$emit` writes to `playground.fast_start_events` through `atlas_lab`.
