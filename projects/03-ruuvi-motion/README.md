@@ -1,46 +1,46 @@
-# Laboratorio 03: agregacion de movimiento Ruuvi
+# Lab 03: Ruuvi Motion Aggregation
 
-Autor de la referencia: Kenny Gorman.
+Reference author: Kenny Gorman.
 
-Fuente: https://medium.com/mongodb/lets-iot-with-ruuvi-atlas-stream-processing-735d2bac6249
+Source: https://medium.com/mongodb/lets-iot-with-ruuvi-atlas-stream-processing-735d2bac6249
 
-**Descripcion:** Simula lecturas de sensores Ruuvi desde una coleccion Atlas y
-calcula el maximo de aceleracion por sensor en ventanas de cinco segundos.
+**Overview:** Simulate Ruuvi sensor readings from an Atlas collection and
+calculate the maximum acceleration per sensor in five-second windows.
 
-## Flow sencillo
+## Data Flow
 
 ```mermaid
 flowchart LR
 		A[ruuvi_sensor_data] --> B[Change Stream]
-		B --> C[Normalizar sensor y aceleracion]
-		C --> D[Ventana tumbling de 5 segundos]
-		D --> E[Maximo por mac_address]
+		B --> C[Normalize sensor and acceleration]
+		C --> D[5-second tumbling window]
+		D --> E[Maximum by mac_address]
 		E --> F[ruuvi_motion]
 ```
 
-En una frase:
+In summary:
 
 ```text
-lecturas Ruuvi -> ventana de 5 segundos -> maximo de aceleracion por sensor -> resultado Atlas
+Ruuvi readings -> 5-second window -> maximum acceleration per sensor -> Atlas output
 ```
 
-## Objetivo
+## Objective
 
-Obtener el maximo de aceleracion de cada sensor durante ventanas de cinco
-segundos, sin necesitar hardware BLE real.
+Calculate each sensor's maximum acceleration in five-second windows without
+requiring physical BLE hardware.
 
-## Preparacion
+## Prerequisites
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Crea `atlas_lab` apuntando al cluster de prueba y prepara la coleccion
-`playground.ruuvi_sensor_data`. Cada documento debe incluir `mac_address`,
-`time` y un valor numerico en `data.acceleration`:
+Create `atlas_lab`, pointing to the test cluster, and prepare the
+`playground.ruuvi_sensor_data` collection. Each document must include
+`mac_address`, `time`, and a numeric value in `data.acceleration`:
 
 ```javascript
 use playground
@@ -52,26 +52,26 @@ db.ruuvi_sensor_data.insertOne({
 })
 ```
 
-Las lecturas y la vista viven en el mismo cluster Atlas, dentro de la base
-`playground`. Para generar varias lecturas sin hardware, conecta `mongosh` al
-cluster Atlas y ejecuta:
+The readings and view use the same Atlas cluster and the `playground` database.
+To generate readings without hardware, connect `mongosh` to the Atlas cluster
+and run:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-En esa sesion ejecuta:
+In that session, run:
 
 ```javascript
 load("[local-repository]/scripts/03-seed-ruuvi.js")
 ```
 
-El seeder inserta seis lecturas de dos sensores, una por segundo. Ejecutalo
-despues de iniciar el processor para que los cambios entren en el Change Stream.
+The seeder inserts six readings from two sensors, one per second. Run it after
+starting the processor so the changes appear in the Change Stream.
 
-## Ejecucion
+## Run the Lab
 
-En otra sesion, conecta `mongosh` al workspace ASP y ejecuta:
+In another session, connect `mongosh` to the ASP workspace and run:
 
 ```javascript
 load('[local-repository]/projects/03-ruuvi-motion/processor.js')
@@ -79,36 +79,36 @@ sp.labRuuviMotion.start()
 sp.labRuuviMotion.stats()
 ```
 
-Despues vuelve a la sesion del cluster Atlas y ejecuta el seeder:
+Then return to the Atlas cluster session and run the seeder:
 
 ```javascript
 load("[local-repository]/scripts/03-seed-ruuvi.js")
 ```
 
-El resultado queda materializado en `playground.ruuvi_motion` como un documento
-por sensor y ventana:
+The results are materialized in `playground.ruuvi_motion`, with one document
+per sensor and window:
 
 ```javascript
 use playground
 db.ruuvi_motion.find().pretty()
 ```
 
-El campo `acceleration` debe corresponder al mayor valor recibido para cada
-sensor dentro de la ventana de cinco segundos. Las lecturas de ventanas
-anteriores pueden ser reemplazadas por la siguiente ventana porque la salida
-usa `$merge` con el identificador del sensor.
+The `acceleration` field should contain the highest value received for each
+sensor within the five-second window. A later window may replace an earlier
+window's reading because the output uses `$merge` with the sensor identifier.
 
-Los cambios sin `fullDocument`, sensores sin `mac_address` o lecturas cuya
-aceleracion no sea numerica se descartan para evitar resultados engañosos.
+Changes without `fullDocument`, sensors without `mac_address`, and readings
+with non-numeric acceleration values are discarded to prevent misleading
+results.
 
-## Limpieza
+## Cleanup
 
 ```javascript
 sp.labRuuviMotion.stop()
 sp.labRuuviMotion.drop()
 ```
 
-Si ya no necesitas los datos de práctica:
+If the lab data is no longer needed:
 
 ```javascript
 use playground
@@ -116,4 +116,5 @@ db.ruuvi_sensor_data.drop()
 db.ruuvi_motion.drop()
 ```
 
-Este laboratorio sustituye el dispositivo BLE por lecturas insertadas en Atlas para que pueda ejecutarse sin hardware.
+This lab replaces a BLE device with readings inserted into Atlas, allowing it
+to run without physical hardware.

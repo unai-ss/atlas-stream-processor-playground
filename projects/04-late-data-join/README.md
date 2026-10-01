@@ -1,30 +1,32 @@
 # Sensor join with late data repair
 
-Autor de la referencia: Joseph Niemiec.
+Reference author: Joseph Niemiec.
 
-Fuente: https://medium.com/mongodb/joins-with-late-data-handling-in-atlas-stream-processing-28219d365714
+Source: https://medium.com/mongodb/joins-with-late-data-handling-in-atlas-stream-processing-28219d365714
 
-**Descripcion:** Une temperatura y humedad desde Kafka usando ventanas y
-lateness controlada, y repara resultados tardios mediante una coleccion DLQ.
+**Overview:** Join temperature and humidity streams from Kafka using windows
+and controlled lateness, then repair late results through a DLQ collection.
 
-## Preparacion
+## Prerequisites
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Registra una conexion Kafka llamada `kafka_lab` con los topics `temperature` y `humidity`. Registra `atlas_lab` y crea las colecciones `playground.sensor_weather` y `playground.sensor_dlq`.
+Register a Kafka connection named `kafka_lab` with the `temperature` and
+`humidity` topics. Register `atlas_lab` and create the
+`playground.sensor_weather` and `playground.sensor_dlq` collections.
 
-Cuando necesites consultar esas colecciones en el cluster Atlas, usa:
+To query these collections in the Atlas cluster, use:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-## Ejecucion
+## Run the Lab
 
 ```javascript
 load('[local-repository]/projects/04-late-data-join/processor.js')
@@ -33,6 +35,9 @@ sp.sensorDLQUpdater.start()
 sp.sensorJoins.stats()
 ```
 
-El primer processor une temperatura y humedad en ventanas de 30 segundos, acepta cinco segundos de lateness y envia eventos tardios al DLQ. El segundo repara el materialized view desde ese DLQ.
+The first processor joins temperature and humidity in 30-second windows,
+allows five seconds of lateness, and sends late events to the DLQ. The second
+processor repairs the materialized view using the DLQ.
 
-Este laboratorio conserva el patron del articulo y requiere Kafka para probar lateness real.
+This lab follows the pattern in the referenced article and requires Kafka to
+test real lateness behavior.

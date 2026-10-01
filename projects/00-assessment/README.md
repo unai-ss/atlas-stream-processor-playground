@@ -1,91 +1,90 @@
-# Laboratorio 00: infraestructura y evaluacion del playground
+# Lab 00: Playground Infrastructure and Assessment
 
-## Proposito
+## Purpose
 
-Este laboratorio tiene dos responsabilidades relacionadas:
+This lab has two related responsibilities:
 
-1. preparar y validar la infraestructura común que reutilizan los laboratorios
-  01, 02, 07 y 08;
-2. definir la evaluación automática de pipelines con fixtures y assertions.
+1. Prepare and validate the shared infrastructure used by labs 01, 02, 07, and 08.
+2. Define automated pipeline assessment using fixtures and assertions.
 
-La creación detallada de proyecto, cluster, usuario, workspace y conexiones
-está en el [manual de infraestructura](MANUAL.md). Los laboratorios posteriores
-no repiten esos pasos: se concentran en pipelines, observabilidad y documentos
-creados en el cluster.
+Detailed instructions for creating the project, cluster, user, workspace, and
+connections are in the [infrastructure manual](MANUAL.md). Later labs do not
+repeat these steps; they focus on pipelines, observability, and documents created
+in the cluster.
 
-La evaluacion usa un proyecto Atlas dedicado y nombres aislados. No usa datos de
-clientes, credenciales en archivos ni recursos de produccion.
+The assessment uses a dedicated Atlas project and isolated resource names. It
+does not use customer data, credentials stored in files, or production resources.
 
 ## Como funciona
 
 ```mermaid
 flowchart LR
-    A[Runner] --> B[Fixtures controlados]
-    B --> C[Processor del evaluado]
-    C --> D[Assertions de salida]
-    D --> E[Informe JSON]
+    A[Runner] --> B[Controlled fixtures]
+    B --> C[Submitted processor]
+    C --> D[Output assertions]
+    D --> E[JSON report]
 ```
 
-## Salida de infraestructura
+## Infrastructure Setup
 
-Antes de crear recursos, registra la sesión del Atlas CLI en la consola con
-`atlas auth login` y compruébala con `atlas auth whoami`. Si la sesión caduca,
-vuelve a ejecutar `atlas auth login`.
+Before creating resources, sign in to Atlas CLI in the terminal with
+`atlas auth login` and verify the session with `atlas auth whoami`. If the
+session expires, run `atlas auth login` again.
 
-Antes de continuar, valida que el entorno común dispone de:
+Before continuing, confirm that the shared environment includes:
 
-- un cluster Atlas de pruebas y un usuario de base de datos;
-- un workspace ASP operativo;
-- la conexión `sample_stream_solar`;
-- la conexión Atlas `atlas_lab`;
-- permisos para crear y consultar las colecciones de los laboratorios.
+- a test Atlas cluster and a database user;
+- an operational ASP workspace;
+- the `sample_stream_solar` connection;
+- the `atlas_lab` Atlas connection;
+- permission to create and query the lab collections.
 
-Después de esta comprobación, sigue el orden pedagógico:
+After validating the environment, follow this learning sequence:
 
 ```text
-00 infraestructura -> 01 pipeline Sample -> 02 Change Stream
-                    -> 07 observabilidad -> 08 paralelismo
+00 infrastructure -> 01 Sample pipeline -> 02 Change Stream
+                    -> 07 observability -> 08 parallelism
 ```
 
-El evaluado solo necesita entregar los processors o completar las tareas
-indicadas. Durante la ejecucion no debe insertar datos manualmente, cambiar el
-pipeline ni intervenir para corregir errores.
+The participant only needs to submit processors or complete the specified
+tasks. The runner must not require manual data insertion, pipeline changes, or
+intervention to correct errors during execution.
 
-## Niveles de evaluacion
+## Assessment Levels
 
-### Nivel 1: nucleo ASP
+### Level 1: ASP Fundamentals
 
-Evalua los laboratorios 01, 02 y 03 con recursos Atlas y datos controlados:
+Assesses labs 01, 02, and 03 using Atlas resources and controlled data:
 
-| Escenario | Evidencia automatica |
+| Scenario | Automated evidence |
 |---|---|
-| 01 Sample | processor activo, eventos entregados y `timestamp` valido |
-| 02 Change Stream | vista por entrega con estado mas reciente |
-| 03 Ruuvi | maximo de aceleracion por sensor en una ventana |
+| 01 Sample | Active processor, delivered events, and a valid `timestamp` |
+| 02 Change Stream | Per-delivery view with the latest state |
+| 03 Ruuvi | Maximum acceleration per sensor within a window |
 
-Este nivel es el camino recomendado para una primera evaluacion porque no
-requiere Kafka, HTTP externo ni AWS.
+This level is recommended for an initial assessment because it does not require
+Kafka, an external HTTP service, or AWS.
 
-### Nivel 2: integraciones
+### Level 2: Integrations
 
-Evalua los laboratorios 04, 05 y 06 mediante adaptadores de prueba:
+Assesses labs 04, 05, and 06 using test adapters:
 
-| Escenario | Adaptador | Evidencia automatica |
+| Scenario | Adapter | Automated evidence |
 |---|---|---|
-| 04 Late data join | fuente Kafka controlada | join, lateness y reparacion DLQ |
-| 05 HTTP enrichment | servidor HTTP local controlado | llamada, mapeo y salida enriquecida |
-| 06 CDC to Kinesis | sink Kinesis simulado | eventos aplanados y partition key |
+| 04 Late data join | Controlled Kafka source | Join, lateness, and DLQ repair |
+| 05 HTTP enrichment | Controlled local HTTP server | Request, mapping, and enriched output |
+| 06 CDC to Kinesis | Simulated Kinesis sink | Flattened events and partition key |
 
-Los adaptadores reproducen el contrato necesario para evaluar el pipeline, pero
-no sustituyen una validacion posterior contra Kafka, HTTP o AWS reales.
+The adapters reproduce the contract needed to assess the pipeline, but do not
+replace subsequent validation against live Kafka, HTTP, or AWS services.
 
-## Contrato del runner
+## Runner Contract
 
-El runner debe ejecutar estas fases sin preguntas interactivas:
+The runner must execute these phases without interactive prompts:
 
-1. Validar herramientas, configuracion y proyecto de pruebas.
-2. Crear nombres unicos para workspace, conexiones, processors y colecciones.
-3. Preparar fixtures y conexiones del escenario.
+1. Validate tools, configuration, and the test project.
+2. Generate unique names for workspaces, connections, processors, and collections.
+3. Prepare fixtures and scenario connections.
 4. Crear y arrancar el processor del evaluado.
 5. Generar eventos de entrada de forma determinista.
 6. Esperar una condicion de salida con timeout.
@@ -93,21 +92,21 @@ El runner debe ejecutar estas fases sin preguntas interactivas:
 8. Evaluar assertions y guardar un informe redactado.
 9. Detener y eliminar todos los recursos creados.
 
-El modo por defecto debe ser `CLEANUP=true`. Un modo de inspeccion puede
-conservar recursos solo cuando se solicite de forma explicita.
+The default mode must be `CLEANUP=true`. An inspection mode may retain resources
+only when explicitly requested.
 
-## Criterios comunes
+## Assessment Criteria
 
-Un escenario pasa solo si:
+A scenario passes only when:
 
 - el processor se crea y alcanza el estado esperado;
 - procesa al menos los eventos minimos del fixture;
 - escribe la salida en el namespace correcto;
 - respeta la forma y los tipos de datos esperados;
-- no necesita cambios manuales durante la ejecucion;
-- termina sin errores no esperados ni residuos tras la limpieza.
+- does not require manual changes during execution;
+- completes without unexpected errors or leftover resources after cleanup.
 
-Cada assertion debe tener un identificador estable, por ejemplo:
+Each assertion must have a stable identifier, for example:
 
 ```text
 ASP-01-STATE
@@ -119,9 +118,9 @@ ASP-05-ENRICHMENT
 ASP-06-PARTITION-KEY
 ```
 
-## Informe esperado
+## Expected Report
 
-El runner debe producir un JSON sin secretos con este formato minimo:
+The runner must produce a JSON report without secrets, using at least this format:
 
 ```json
 {
@@ -141,16 +140,16 @@ El runner debe producir un JSON sin secretos con este formato minimo:
 }
 ```
 
-## Resultado pedagogico
+## Learning Outcome
 
-La persona demuestra capacidad sobre comportamientos, no sobre copiar nombres
-concretos. El runner puede cambiar valores, orden de eventos y nombres de
-recursos en cada ejecucion, mientras conserva el contrato funcional.
+Participants demonstrate understanding of behavior rather than memorizing
+specific names. The runner may vary values, event order, and resource names in
+each run while preserving the functional contract.
 
-## Orden recomendado de implementacion
+## Recommended Implementation Order
 
-1. Automatizar el nivel 1 para 01-03.
-2. Crear assertions deterministas y fixtures versionados.
-3. Añadir timeout, limpieza e informe redactado.
-4. Implementar adaptadores locales para 04-06.
-5. Ejecutar una validacion final con servicios reales como prueba de integracion.
+1. Automate Level 1 for labs 01–03.
+2. Create deterministic assertions and versioned fixtures.
+3. Add timeouts, cleanup, and a redacted report.
+4. Implement local adapters for labs 04–06.
+5. Run final validation against live services as an integration test.

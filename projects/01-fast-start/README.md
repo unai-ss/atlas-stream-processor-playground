@@ -1,33 +1,32 @@
-# Laboratorio 01: primer flujo con Sample
+# Lab 01: First Pipeline with Sample
 
-Autor de la referencia: Kenny Gorman.
+Reference author: Kenny Gorman.
 
-Fuente: https://medium.com/mongodb/the-fastest-way-to-try-atlas-stream-processing-43cd7e0cfe1e
+Source: https://medium.com/mongodb/the-fastest-way-to-try-atlas-stream-processing-43cd7e0cfe1e
 
-Documentacion oficial relacionada: https://www.mongodb.com/docs/atlas/atlas-stream-processing/quickstart
+Related official documentation: https://www.mongodb.com/docs/atlas/atlas-stream-processing/quickstart
 
-**Descripcion:** Observa eventos de `sample_stream_solar` y aprende a crear un
-processor persistente que los escribe en una coleccion Atlas.
+**Overview:** Observe events from `sample_stream_solar` and create a persistent
+processor that writes them to an Atlas collection.
 
-La infraestructura se prepara una sola vez en el [laboratorio 00](../00-assessment/).
-Este laboratorio se centra en el pipeline, su ciclo de vida y los documentos
-que llegan al cluster.
+Prepare the infrastructure once in [Lab 00](../00-assessment/). This lab focuses
+on the pipeline, its lifecycle, and the documents written to the cluster.
 
-## Objetivo
+## Objective
 
-Completar el primer flujo de Atlas Stream Processing en dos pasos: comprobar
-que una fuente emite eventos y despues persistir esos eventos en una coleccion
-Atlas mediante un processor administrado.
+Build your first Atlas Stream Processing pipeline in two steps: verify that a
+source emits events, then persist those events to an Atlas collection with a
+managed processor.
 
-## Conceptos ASP
+## ASP Concepts
 
-- conexion `Sample` y etapa `$source`;
-- inspeccion temporal con `sp.process()`;
-- processor persistente y ciclo de vida `start`, `stats`, `sample`, `stop` y `drop`;
-- normalizacion de `timestamp` antes de escribir en una coleccion time-series;
-- etapa `$emit` hacia un sink Atlas.
+- `Sample` connection and `$source` stage;
+- temporary inspection with `sp.process()`;
+- persistent processors and the `start`, `stats`, `sample`, `stop`, and `drop` lifecycle;
+- `timestamp` normalization before writing to a time-series collection;
+- the `$emit` stage for an Atlas sink.
 
-## Arquitectura
+## Architecture
 
 ```text
 sample_stream_solar
@@ -37,47 +36,48 @@ sample_stream_solar
 		-> playground.fast_start_events
 ```
 
-## Preparacion
+## Prerequisites
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Si todavía no existe el workspace o alguna conexión, sigue primero el
-[manual de infraestructura del laboratorio 00](../00-assessment/MANUAL.md).
-Aquí no se crean clusters, usuarios ni workspaces.
+If the workspace or any connection has not been created, first follow the
+[Lab 00 infrastructure manual](../00-assessment/MANUAL.md). This lab does not
+create clusters, users, or workspaces.
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-El workspace de Stream Processing suele incluir la conexion `Sample`
-`sample_stream_solar`. Si no aparece en `sp.listConnections()`, registrala
-antes de continuar.
+The Stream Processing workspace typically includes the `Sample` connection
+`sample_stream_solar`. If it does not appear in `sp.listConnections()`, add it
+before continuing.
 
-Necesitas:
+You will need:
 
 - un Stream Processing Workspace de pruebas;
 - acceso a ese workspace con `mongosh`;
 - `mongosh` version 2.0 o posterior;
-- una conexion Atlas llamada `atlas_lab`;
-- la coleccion `playground.fast_start_events` preparada como time-series con
+- an Atlas connection named `atlas_lab`;
+- the `playground.fast_start_events` collection configured as a time-series
+	collection with
 	`timestamp` como `timeField`.
 
-Para consultar el cluster Atlas, usa la URI que ya contiene las credenciales de
-`stream[redacted]`:
+To access the Atlas cluster, use the URI that already contains the credentials
+for `stream[redacted]`:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-La conexion al workspace ASP usa su hostname y se mantiene separada de
+The ASP workspace connection uses its hostname and remains separate from
 `ATLAS_URI`.
 
-El primer paso no requiere cargar el archivo `processor.js`.
+The first step does not require loading `processor.js`.
 
-## Paso 1: observar la fuente
+## Step 1: Inspect the Source
 
-Conectado al Stream Processing Workspace, ejecuta un processor temporal:
+While connected to the Stream Processing workspace, run a temporary processor:
 
 ```javascript
 sp.process([
@@ -89,7 +89,7 @@ sp.process([
 ])
 ```
 
-Deberias ver documentos similares a:
+You should see documents similar to:
 
 ```javascript
 {
@@ -102,25 +102,25 @@ Deberias ver documentos similares a:
 }
 ```
 
-Termina la ejecucion temporal con `Ctrl-C`. Este processor no se guarda en el
-workspace y no crea recursos persistentes.
+Stop the temporary run with `Ctrl-C`. This processor is not saved to the
+workspace and does not create persistent resources.
 
-## Paso 2: crear el processor persistente
+## Step 2: Create the Persistent Processor
 
-Carga la definicion desde `mongosh` conectado al workspace:
+Load the definition from `mongosh` connected to the workspace:
 
 ```javascript
 load("[local-repository]/projects/01-fast-start/processor.js")
 ```
 
-El archivo crea `labFastStart` con estas etapas:
+The file creates `labFastStart` with these stages:
 
 1. `$source` lee `sample_stream_solar`.
-2. `$set` convierte el timestamp ISO de Sample a una fecha y usa un fallback
-	fijo solo si falta o no se puede convertir.
-3. `$emit` escribe en `playground.fast_start_events` mediante `atlas_lab`.
+2. `$set` converts the Sample ISO timestamp to a date and uses a fixed fallback
+   only when the value is missing or cannot be converted.
+3. `$emit` writes to `playground.fast_start_events` through `atlas_lab`.
 
-Inicia y observa el processor:
+Start and monitor the processor:
 
 ```javascript
 sp.labFastStart.start()
@@ -128,32 +128,32 @@ sp.labFastStart.stats()
 sp.labFastStart.sample()
 ```
 
-`stats()` confirma actividad operacional y `sample()` muestra una muestra de
-documentos procesados en la consola.
+`stats()` confirms operational activity, and `sample()` displays a sample of
+processed documents in the console.
 
-## Verificacion del sink
+## Verify the Sink
 
-Desde una conexion al cluster Atlas, comprueba que llegaron documentos:
+From a connection to the Atlas cluster, verify that documents have arrived:
 
 ```javascript
 use playground
 db.fast_start_events.findOne()
 ```
 
-La salida debe contener un `timestamp` de tipo fecha y los campos del evento
-Sample, como `device_id`, `obs.watts` y `obs.temp`:
+The output should contain a date-type `timestamp` and Sample event fields such
+as `device_id`, `obs.watts`, and `obs.temp`:
 
 ```javascript
 db.fast_start_events.findOne({ timestamp: { $type: "date" } })
 db.fast_start_events.countDocuments()
 ```
 
-El contador debe ser mayor que cero y el timestamp debe corresponder al evento
-recibido, salvo en mensajes sin timestamp valido.
+The count should be greater than zero, and the timestamp should match the
+received event except for messages without a valid timestamp.
 
-## Limpieza
+## Cleanup
 
-Cuando termines la practica, detiene y elimina el processor persistente:
+When you finish the lab, stop and remove the persistent processor:
 
 ```javascript
 sp.labFastStart.stop()
@@ -161,12 +161,13 @@ sp.labFastStart.drop()
 sp.listStreamProcessors()
 ```
 
-`drop()` es permanente. La coleccion sink y el workspace se eliminan siguiendo
-la limpieza general descrita en [ASP_OPERATIONS_GUIDE.md](../../ASP_OPERATIONS_GUIDE.md).
+`drop()` is permanent. Remove the sink collection and workspace by following
+the general cleanup procedure in [ASP_OPERATIONS_GUIDE.md](../../ASP_OPERATIONS_GUIDE.md).
 
-## Ejercicio opcional
+## Optional Exercise
 
-Modifica el pipeline para conservar solo eventos cuyo `obs.watts` sea mayor que
-200. Comprueba con `sample()` y con una consulta al sink que el filtro se aplica.
+Modify the pipeline to retain only events where `obs.watts` is greater than
+200. Verify the filter using `sample()` and a query against the sink.
 
-Este laboratorio es una adaptacion local del articulo; no es codigo oficial del autor.
+This lab is a local adaptation of the referenced article and is not official
+code from the author.

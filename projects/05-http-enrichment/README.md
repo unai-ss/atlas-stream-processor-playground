@@ -1,30 +1,33 @@
 # IP traffic HTTP enrichment
 
-Autor de la referencia: Kenny Gorman.
+Reference author: Kenny Gorman.
 
-Fuente: https://medium.com/towards-data-engineering/enriching-via-api-the-https-operator-in-mongodb-atlas-stream-processing-bbe03ad70ac8
+Source: https://medium.com/towards-data-engineering/enriching-via-api-the-https-operator-in-mongodb-atlas-stream-processing-bbe03ad70ac8
 
-**Descripcion:** Enriquece eventos de trafico con datos de una API HTTP externa
-y guarda en Atlas la informacion geografica devuelta para cada IP.
+**Overview:** Enrich traffic events with data from an external HTTP API and
+store the geographic information returned for each IP address in Atlas.
 
-## Preparacion
+## Prerequisites
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Registra una conexion HTTPS llamada `ipinfo` con base URL `https://ipinfo.io/`. Si usas token, configuralo como secreto en el Connection Registry. El laboratorio usa IPs de documentacion y genera los eventos con `$source.documents`.
+Register an HTTPS connection named `ipinfo` with the base URL
+`https://ipinfo.io/`. If you use a token, configure it as a secret in the
+Connection Registry. This lab uses documentation IP addresses and generates
+events with `$source.documents`.
 
-Para consultar la salida en el cluster Atlas, conecta con:
+To query the output in the Atlas cluster, connect with:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-## Ejecucion
+## Run the Lab
 
 ```javascript
 load('[local-repository]/projects/05-http-enrichment/processor.js')
@@ -32,6 +35,9 @@ sp.labHttpEnrichment.start()
 sp.labHttpEnrichment.stats()
 ```
 
-El resultado se escribe en `playground.ip_traffic_enriched` con ciudad, region y pais devueltos por la API.
+The result is written to `playground.ip_traffic_enriched` and includes the
+city, region, and country returned by the API.
 
-La llamada HTTP genera coste o limites del servicio externo si se cambia la fuente de ejemplo. Este laboratorio es una adaptacion local del articulo.
+The HTTP request may incur costs or be subject to the external service's rate
+limits if you change the example source. This lab is a local adaptation of the
+referenced article.

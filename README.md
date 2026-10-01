@@ -25,7 +25,7 @@ laboratories 00, 01, 02, and 08 also include repeatable setup guidance.
 
 ## Project Catalog
 
-| Proyecto | Autor |
+| Project | Author |
 |---|---|
 | [Infrastructure and automated playground assessment](projects/00-assessment) | MongoDB playground |
 | [Fast start with Sample source](projects/01-fast-start) | Kenny Gorman |
@@ -51,14 +51,14 @@ the referenced authors' work.
 
 ## Setup
 
-Antes de ejecutar cualquier comando de Atlas, asegúrate de haberte registrado
-en la consola con `atlas auth login` y confirma la sesión con:
+Before running any Atlas command, sign in from the terminal with
+`atlas auth login` and verify the session with:
 
 ```bash
 atlas auth whoami
 ```
 
-Si la sesión ha caducado, vuelve a ejecutar `atlas auth login`.
+If the session has expired, run `atlas auth login` again.
 
 ```bash
 cp .env.example .env
@@ -73,15 +73,15 @@ The required Atlas permissions include the ability to manage Stream Processing w
 
 For the complete CLI workflow, see [ASP_OPERATIONS_GUIDE.md](ASP_OPERATIONS_GUIDE.md). It covers workspace creation, connections, time-series sink preparation, processor lifecycle, operational logs, validation, and cleanup.
 
-Antes de usar cualquier `ATLAS_URI`, ejecuta el preflight común:
+Before using any `ATLAS_URI`, run the shared preflight:
 
 ```bash
 source .env
 ./scripts/validate-atlas-connection.sh
 ```
 
-El preflight detecta si el cluster se recreó y la URI local conserva un
-hostname antiguo.
+The preflight detects whether the cluster has been recreated while the local
+URI still contains an outdated hostname.
 
 Known limitations and the recommended work order are tracked in [LIMITATIONS.md](LIMITATIONS.md).
 

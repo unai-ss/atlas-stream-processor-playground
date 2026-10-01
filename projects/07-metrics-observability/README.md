@@ -1,10 +1,10 @@
-# Laboratorio 07: observabilidad y troubleshooting ASP
+# Lab 07: ASP Observability and Troubleshooting
 
-**Descripcion:** Ejecuta un processor sobre `sample_stream_solar` y aprende a
-observar su estado, los documentos que atraviesan el pipeline y el sink Atlas.
+**Overview:** Run a processor against `sample_stream_solar` and monitor its
+state, the documents flowing through the pipeline, and the Atlas sink.
 
-Aprende a interpretar `stats()`, `sample()`, estado del processor, salida en
-Atlas y señales de DLQ/logs para diagnosticar fallos de Atlas Stream Processing.
+Learn to interpret `stats()`, `sample()`, processor state, Atlas output, and
+DLQ/log signals to diagnose Atlas Stream Processing issues.
 
 Documentacion oficial relacionada:
 
@@ -12,65 +12,65 @@ Documentacion oficial relacionada:
 - https://www.mongodb.com/docs/atlas/atlas-stream-processing/quickstart
 - https://www.mongodb.com/docs/manual/reference/method/sp.processor.sample
 
-## Objetivo
+## Objective
 
-Entender un processor en operacion: comprobar si existe, si esta arrancado, si
-recibe datos, si transforma correctamente, si escribe en el sink y donde mirar
-cuando algo no cuadra.
+Understand a processor in operation: confirm that it exists and is running,
+receives data, transforms events correctly, and writes to the sink. Learn where
+to investigate when results do not match expectations.
 
-Este laboratorio es la linea base del laboratorio 08. Aqui no se comparan
-workers ni se intenta medir rendimiento: primero se separan señales de salud,
-flujo, resultado y diagnostico.
+This lab establishes the baseline for Lab 08. It does not compare workers or
+measure performance; first, it distinguishes health, data flow, output, and
+diagnostic signals.
 
-## Conceptos ASP
+## ASP Concepts
 
 - `sp.listStreamProcessors()` para confirmar existencia del processor;
 - `sp.<processor>.stats()` para leer estado y actividad operacional;
-- `sp.<processor>.sample()` para observar documentos procesados en vivo;
-- comparacion entre fuente, muestra y sink persistido;
-- filtros que descartan eventos Sample que no tengan los campos esperados;
-- DLQ como evidencia de fallos procesables por el processor;
-- logs y Atlas UI como siguiente nivel cuando `stats()` no basta.
+- `sp.<processor>.sample()` to inspect documents processed in real time;
+- comparison of source events, samples, and persisted sink output;
+- filters that discard Sample events without the expected fields;
+- the DLQ as evidence of processor-handled failures;
+- logs and the Atlas UI as the next diagnostic level when `stats()` is insufficient.
 
-## Flow sencillo
+## Data Flow
 
 ```mermaid
 flowchart LR
    A[sample_stream_solar] --> B[Sample source]
-   B --> C[Filtrar eventos validos]
-    C --> D[Agregar processed_at]
+   B --> C[Filter valid events]
+    C --> D[Add processed_at]
     D --> E[metrics_output]
     B --> F[stats y sample]
-    C --> G[hipotesis de descarte]
+   C --> G[Discard hypothesis]
 ```
 
-En una frase:
+In summary:
 
 ```text
-sample_stream_solar -> processor observable -> metrics_output -> diagnostico guiado
+sample_stream_solar -> observable processor -> metrics_output -> guided diagnosis
 ```
 
-## Preparacion
+## Prerequisites
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Prepara primero el entorno común con el [laboratorio 00](../00-assessment/MANUAL.md).
-Este laboratorio no crea clusters, usuarios ni workspaces.
+Prepare the shared environment using the [Lab 00 manual](../00-assessment/MANUAL.md).
+This lab does not create clusters, users, or workspaces.
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-Necesitas:
+You will need:
 
-- un workspace ASP de pruebas;
-- una conexion Atlas llamada `atlas_lab`;
-- acceso al cluster Atlas con `mongosh`;
-- la conexion Sample `sample_stream_solar`;
-- la coleccion `playground.metrics_output`.
+- a test ASP workspace;
+- an Atlas connection named `atlas_lab`;
+- `mongosh` access to the Atlas cluster;
+- the `sample_stream_solar` Sample connection;
+- the `playground.metrics_output` collection.
 
-Antes de cargar el pipeline, ejecuta este preflight en el workspace ASP:
+Before loading the pipeline, run this preflight in the ASP workspace:
 
 ```javascript
 sp.listConnections()
@@ -78,30 +78,30 @@ try { sp.labMetricsObservability.stop() } catch (error) {}
 try { sp.labMetricsObservability.drop() } catch (error) {}
 ```
 
-En el cluster Atlas, limpia el sink del laboratorio para no mezclar resultados
-anteriores:
+In the Atlas cluster, clear the lab sink to avoid mixing results from previous
+runs:
 
 ```javascript
 use playground
 db.metrics_output.drop()
 ```
 
-Si falta `sample_stream_solar`, `atlas_lab` o el workspace no está operativo,
-detente y completa el [laboratorio 00](../00-assessment/MANUAL.md).
+If `sample_stream_solar` or `atlas_lab` is missing, or the workspace is not
+operational, stop and complete [Lab 00](../00-assessment/MANUAL.md).
 
-Para trabajar con las colecciones del cluster Atlas, conecta con:
+To work with collections in the Atlas cluster, connect with:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-La conexión al workspace ASP es independiente y se realiza con su hostname.
+The ASP workspace uses a separate connection through its hostname.
 
-`metrics_output` puede ser creada por `$merge` en la primera escritura.
+`$merge` may create `metrics_output` on the first write.
 
-## Paso 1: arrancar el processor
+## Step 1: Start the Processor
 
-En `mongosh` conectado al workspace ASP:
+In `mongosh` connected to the ASP workspace:
 
 ```javascript
 load("[local-repository]/projects/07-metrics-observability/processor.js")
@@ -110,25 +110,25 @@ sp.labMetricsObservability.start()
 sp.labMetricsObservability.stats()
 ```
 
-Primera lectura: el processor debe existir y estar arrancado. Sample produce
-eventos por su cuenta; el ritmo y la cantidad no los controla este laboratorio.
+First, confirm that the processor exists and is running. Sample generates
+events independently; this lab does not control their rate or volume.
 
-## Paso 2: observar señales del processor
+## Step 2: Inspect Processor Signals
 
-En el workspace ASP:
+In the ASP workspace:
 
 ```javascript
 sp.labMetricsObservability.stats()
 sp.labMetricsObservability.sample()
 ```
 
-`stats()` ayuda a saber si el processor esta activo. `sample()` muestra documentos
-que ya pasaron el pipeline; si no aparece nada, no asumas aun que el processor
-esta roto.
+`stats()` indicates whether the processor is active. `sample()` displays
+documents that have passed through the pipeline; if it returns nothing, do not
+assume the processor is faulty yet.
 
-## Paso 3: comparar fuente y sink
+## Step 3: Compare the Source and Sink
 
-En el cluster Atlas:
+In the Atlas cluster:
 
 ```javascript
 use playground
@@ -137,73 +137,72 @@ db.metrics_output.countDocuments()
 db.metrics_output.find().sort({ device_id: 1 }).pretty()
 ```
 
-Resultado esperado:
+Expected results:
 
-- `metrics_output` contiene como maximo un documento por `device_id`;
-- una nueva muestra del mismo dispositivo reemplaza su documento anterior;
-- cada salida valida contiene `value`, `observed_at`, `processed_at` y
+- `metrics_output` contains at most one document per `device_id`;
+- a new sample from the same device replaces its previous document;
+- each valid output contains `value`, `observed_at`, `processed_at`, and
    `lab: "metrics-observability"`;
-- la cantidad y el contenido exactos dependen del flujo generado por Sample.
+- the exact count and content depend on the events generated by Sample.
 
-Clasifica las observaciones en tres grupos:
+Classify observations into three categories:
 
-| Tipo de señal | Ejemplos | Pregunta que responde |
+| Signal type | Examples | Question answered |
 |---|---|---|
-| Salud | estado de `stats()`, errores, processor existente | ¿El processor esta operativo? |
-| Flujo | `sample()`, conteo del sink y actividad de `stats()` | ¿Los eventos atraviesan el pipeline? |
-| Resultado | campos de `metrics_output`, reemplazos por `device_id` | ¿La salida es correcta? |
+| Health | `stats()` state, errors, processor existence | Is the processor operational? |
+| Flow | `sample()`, sink count, and `stats()` activity | Are events flowing through the pipeline? |
+| Output | `metrics_output` fields and replacements by `device_id` | Is the output correct? |
 
-## Paso 5: diagnostico guiado
+## Step 5: Guided Diagnosis
 
-| Sintoma | Hipotesis | Donde mirar |
+| Symptom | Hypothesis | Where to check |
 |---|---|---|
-| No existe el processor | No se ejecuto `load()` o fallo la creacion | `sp.listStreamProcessors()` |
-| Existe pero no procesa | No esta arrancado o no llegan eventos nuevos | `stats()`, inserciones recientes |
-| `sample()` no muestra datos | No pasaron eventos por el pipeline o ya no hay muestra disponible | `stats()`, sink Atlas |
-| Hay actividad pero poca salida | El filtro descarta una muestra sin los campos esperados | comparar `sample()` y `metrics_output` |
-| El sink no crece | Problema de conexion, permisos o `$merge` | `atlas_lab`, logs, Atlas UI |
-| Aparecen errores | Fallo de operador o documento incompatible | DLQ, logs, `errInfo.reason` |
-| La salida cambia de valor | `$merge` reemplaza por `device_id` | `metrics_output.find()` |
+| Processor is missing | `load()` was not run or creation failed | `sp.listStreamProcessors()` |
+| Processor exists but does not process data | It is not running or no new events are arriving | `stats()`, recent inserts |
+| `sample()` returns no data | No events passed through the pipeline or no sample is currently available | `stats()`, Atlas sink |
+| Activity is visible but output is low | The filter discards samples without the expected fields | Compare `sample()` with `metrics_output` |
+| Sink is not growing | Connection, permissions, or `$merge` issue | `atlas_lab`, logs, Atlas UI |
+| Errors appear | Operator failure or incompatible document | DLQ, logs, `errInfo.reason` |
+| Output values change | `$merge` replaces documents by `device_id` | `metrics_output.find()` |
 
-## Ideas clave de troubleshooting
+## Troubleshooting Guidelines
 
-1. Empieza por el estado: confirma que el workspace, la conexion y el processor
-   existen antes de mirar datos.
-2. Separa fuente, pipeline y sink. Un fallo en salida no siempre significa que
-   la fuente no emita.
-3. Recuerda que Sample genera los eventos: no puedes insertar un lote controlado
-   ni exigir una cantidad concreta desde este laboratorio.
-4. Usa `sample()` para ver documentos que atraviesan el pipeline, no como unica
-   prueba de persistencia.
-5. Compara `sample()` y el sink para detectar filtros o reemplazos esperados.
-6. Trata la DLQ como evidencia estructurada: revisa `processorName`,
-   `operatorName`, `errInfo.reason`, `doc` y `_stream_meta`.
-7. No cambies varias cosas a la vez: formula una hipotesis, ejecuta una prueba
-   barata y valida si el resultado la confirma.
+1. Start with processor state: confirm that the workspace, connection, and
+   processor exist before inspecting data.
+2. Check the source, pipeline, and sink separately. Missing output does not
+   necessarily mean the source is inactive.
+3. Remember that Sample generates events. This lab cannot insert a controlled
+   batch or guarantee a specific event count.
+4. Use `sample()` to inspect documents flowing through the pipeline, not as the
+   only evidence of persistence.
+5. Compare `sample()` with the sink to identify expected filtering or replacement.
+6. Treat the DLQ as structured evidence: inspect `processorName`,
+   `operatorName`, `errInfo.reason`, `doc`, and `_stream_meta`.
+7. Change one variable at a time. Form a hypothesis, run a low-cost check, and
+   determine whether the result supports it.
 
-## Que mirar en las metricas de ASP
+## ASP Metrics to Review
 
-En `stats()` interpreta las señales en este orden:
+Interpret the `stats()` signals in this order:
 
-| Metrica | Que indica | Señal esperada |
+| Metric | Description | Expected signal |
 |---|---|---|
-| `state` | Salud del processor | `STARTED` |
-| `inputMessageCount` | Mensajes recibidos desde la fuente | Aumenta cuando llega actividad |
-| `outputMessageCount` | Mensajes que completan el pipeline | Aumenta junto con el sink |
-| `dlqMessageCount` | Mensajes que fallaron | `0` en una ejecución correcta |
-| `lastMessageIn` | Momento del último evento recibido | Debe avanzar con nueva actividad |
-| `lastCheckpointSave` | Progreso persistido del source | Debe avanzar después de procesar |
-| `throttle.throttleEvents` | Eventos limitados por capacidad | `0` o crecimiento justificado |
-| `memoryUsageBytes` | Memoria usada por el processor | Observar tendencia, no un valor aislado |
+| `state` | Processor health | `STARTED` |
+| `inputMessageCount` | Messages received from the source | Increases as events arrive |
+| `outputMessageCount` | Messages that complete the pipeline | Increases alongside sink output |
+| `dlqMessageCount` | Messages that failed | `0` for a successful run |
+| `lastMessageIn` | Time of the most recent event received | Advances as new events arrive |
+| `lastCheckpointSave` | Persisted source progress | Advances after processing |
+| `throttle.throttleEvents` | Events limited by capacity | `0` or an explained increase |
+| `memoryUsageBytes` | Memory used by the processor | Review the trend, not a single value |
 
-No confundas un processor `STARTED` con un pipeline correcto: puede estar
-activo y enviar todos los eventos al DLQ. Compara siempre entrada, salida, DLQ y
-sink como un conjunto.
+Do not treat a `STARTED` processor as proof of a healthy pipeline: it may be
+active while sending every event to the DLQ. Always review input, output, DLQ,
+and sink data together.
 
-## Criterio de linea base
+## Baseline Criteria
 
-Antes de pasar al laboratorio 08, guarda estos resultados de una ejecucion
-limpia:
+Before moving to Lab 08, record these results from a clean run:
 
 ```text
 processor: labMetricsObservability
@@ -213,24 +212,24 @@ processor state: STARTED
 unexpected errors: 0
 ```
 
-La linea base no es un benchmark ni exige un numero fijo de documentos. Es un
-punto de referencia para distinguir un problema de configuracion de un cambio
-de comportamiento introducido por el laboratorio 08.
+This baseline is not a benchmark and does not require a fixed document count.
+It provides a reference for distinguishing configuration issues from behavior
+changes introduced in Lab 08.
 
-## Preguntas de comprobacion
+## Review Questions
 
-Al terminar, la persona deberia poder responder:
+After completing the lab, participants should be able to answer:
 
-- Que comando confirma que el processor existe?
-- Que diferencia hay entre `stats()` y `sample()`?
-- Por que `metrics_output` conserva como maximo un documento por dispositivo?
-- Que campo indica que el processor agrego informacion nueva?
-- Donde mirarias si `$merge` no escribe en Atlas?
-- Cuando tiene sentido revisar DLQ?
+- Which command confirms that the processor exists?
+- What is the difference between `stats()` and `sample()`?
+- Why does `metrics_output` retain at most one document per device?
+- Which field indicates that the processor added new information?
+- Where should you investigate if `$merge` does not write to Atlas?
+- When should you review the DLQ?
 
-## Limpieza
+## Cleanup
 
-En el workspace ASP:
+In the ASP workspace:
 
 ```javascript
 sp.labMetricsObservability.stop()
@@ -238,14 +237,14 @@ sp.labMetricsObservability.drop()
 sp.listStreamProcessors()
 ```
 
-En el cluster Atlas:
+In the Atlas cluster:
 
 ```javascript
 use playground
 db.metrics_output.drop()
 ```
 
-Este laboratorio no reemplaza la observabilidad de Atlas UI ni integraciones
-como Datadog u OpenTelemetry. Su objetivo es construir el habito de diagnostico
-con señales basicas de una fuente Sample antes de pasar a datos controlados y
-sistemas externos.
+This lab does not replace Atlas UI observability or integrations such as
+Datadog or OpenTelemetry. Its purpose is to establish a diagnostic practice
+using basic signals from a Sample source before progressing to controlled data
+and external systems.

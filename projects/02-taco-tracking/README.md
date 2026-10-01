@@ -1,73 +1,72 @@
-# Laboratorio 02: vista de entregas con Change Streams
+# Lab 02: Delivery Tracking with Change Streams
 
-Autor de la referencia: Kenny Gorman.
+Reference author: Kenny Gorman.
 
-Fuente: https://medium.com/mongodb/locating-tacos-with-atlas-stream-processing-or-streaming-etl-with-mongodb-8b43b4d6ae54
+Source: https://medium.com/mongodb/locating-tacos-with-atlas-stream-processing-or-streaming-etl-with-mongodb-8b43b4d6ae54
 
-**Descripcion:** Lee cambios de `taco_events`, agrupa las entregas en ventanas
-y mantiene una vista materializada con la posicion mas reciente.
+**Overview:** Read changes from `taco_events`, group deliveries into windows,
+and maintain a materialized view of the latest position.
 
-La infraestructura común se prepara en el [laboratorio 00](../00-assessment/).
-Este laboratorio se centra en crear documentos en Atlas, observar el Change
-Stream y materializar la vista de entregas.
+Prepare the shared infrastructure in [Lab 00](../00-assessment/). This lab
+focuses on creating documents in Atlas, monitoring the Change Stream, and
+maintaining the delivery view.
 
-## Objetivo
+## Objective
 
-Transformar cambios de una coleccion Atlas en una vista materializada con la
-ultima posicion conocida de cada entrega.
+Transform changes from an Atlas collection into a materialized view containing
+the latest known position for each delivery.
 
-## Conceptos ASP
+## ASP Concepts
 
-- `$source` con una conexion Atlas y Change Streams;
+- `$source` with an Atlas connection and Change Streams;
 - `fullDocument: "updateLookup"` para recuperar el documento posterior en
 	eventos `update`;
-- filtrado de operaciones `insert`, `update` y `replace`;
+- filtering `insert`, `update`, and `replace` operations;
 - ventanas `$tumblingWindow`;
-- seleccion del evento mas reciente con `$top`;
-- `$merge` para mantener una vista por `delivery_id`.
+- selecting the latest event with `$top`;
+- `$merge` to maintain one view per `delivery_id`.
 
-## Arquitectura
-		-> ventana de 1 minuto
-		-> $group por delivery_id
-		-> $top por timestamp
-		-> $merge
-		-> playground.taco_locations
+## Architecture
+```text
+Atlas Change Stream -> 1-minute window -> $group by delivery_id
+                    -> $top by timestamp -> $merge
+                    -> playground.taco_locations
 ```
 
-## Preparacion
+## Prerequisites
 
-Antes de continuar, ejecuta `atlas auth login` desde la consola y confirma la
-sesión con `atlas auth whoami`. Si la sesión ha caducado, vuelve a ejecutar
-`atlas auth login`.
+Before continuing, run `atlas auth login` in the terminal and verify the
+session with `atlas auth whoami`. If the session has expired, run
+`atlas auth login` again.
 
-Comprueba primero la infraestructura del [laboratorio 00](../00-assessment/MANUAL.md).
-No repitas aquí la creación del cluster, el usuario ni el workspace.
+First, verify the infrastructure described in the [Lab 00 manual](../00-assessment/MANUAL.md).
+Do not recreate the cluster, user, or workspace here.
 
-Antes de usar `ATLAS_URI`, ejecuta `./scripts/validate-atlas-connection.sh`
-desde la raíz del proyecto para detectar un hostname antiguo.
+Before using `ATLAS_URI`, run `./scripts/validate-atlas-connection.sh` from the
+project root to detect an outdated hostname.
 
-Necesitas:
+You will need:
 
-- el mismo workspace ASP y la conexion Atlas `atlas_lab` del laboratorio 01;
-- un cluster Atlas de pruebas;
-- acceso al workspace y al cluster con `mongosh`;
-- la coleccion `playground.taco_events`.
+- the same ASP workspace and `atlas_lab` Atlas connection used in Lab 01;
+- a test Atlas cluster;
+- `mongosh` access to the workspace and cluster;
+- the `playground.taco_events` collection.
 
-Para conectarte al cluster Atlas usa la URI completa, que incluye las
-credenciales de `stream[redacted]`:
+To connect to the Atlas cluster, use the full URI, which includes the
+credentials for `stream[redacted]`:
 
 ```bash
 mongosh "$ATLAS_URI"
 ```
 
-Para conectarte al workspace ASP usa su hostname `ASP_HOST`; es un endpoint
-distinto del cluster Atlas. Ejecuta el [preflight del manual](MANUAL.md) antes
-de cargar el processor. Si faltan infraestructura o conexiones, completa el
-[laboratorio 00](../00-assessment/MANUAL.md).
+To connect to the ASP workspace, use its `ASP_HOST` hostname; this is a
+different endpoint from the Atlas cluster. Run the [manual's preflight](MANUAL.md)
+before loading the processor. If infrastructure or connections are missing,
+complete [Lab 00](../00-assessment/MANUAL.md).
 
-`$merge` puede crear `playground.taco_locations` durante la primera ventana.
+`$merge` may create `playground.taco_locations` during the first window.
 
-## Paso 1: generar eventos
+## Step 1: Generate Events
 use playground
 
 db.taco_events.insertOne({
@@ -85,12 +84,13 @@ db.taco_events.insertOne({
 })
 ```
 
-Cada insercion produce un evento en el Change Stream. Los documentos existentes
-antes de iniciar el processor no se reprocesan automaticamente.
+Each insert generates a Change Stream event. Documents that existed before the
+processor started are not replayed automatically.
 
-## Paso 2: observar el Change Stream
+## Step 2: Inspect the Change Stream
 
-Antes del processor persistente, conecta `mongosh` al workspace ASP y ejecuta:
+Before starting the persistent processor, connect `mongosh` to the ASP
+workspace and run:
 
 ```javascript
 sp.process([
@@ -105,12 +105,12 @@ sp.process([
 ])
 ```
 
-Mientras el comando esta activo, inserta otro evento y observa su
-`operationType` y `fullDocument`. Termina el processor temporal con `Ctrl-C`.
+While the command is running, insert another event and inspect its
+`operationType` and `fullDocument`. Stop the temporary processor with `Ctrl-C`.
 
-## Paso 3: crear la vista materializada
+## Step 3: Create the Materialized View
 
-Conecta de nuevo al workspace ASP y carga el processor:
+Reconnect to the ASP workspace and load the processor:
 
 ```javascript
 load("[local-repository]/projects/02-taco-tracking/processor.js")
@@ -119,17 +119,17 @@ sp.labTacoTracking.stats()
 sp.labTacoTracking.sample()
 ```
 
-El processor agrupa cada minuto y conserva, para cada `delivery_id`, el evento
-con el timestamp mas reciente dentro de la ventana.
+The processor groups events into one-minute windows and retains, for each
+`delivery_id`, the event with the latest timestamp in the window.
 
-Al recrear un processor, los eventos anteriores a su inicio no se reprocesan.
-Usa eventos nuevos para la prueba. La ventana se emite cuando el watermark
-avanza a una ventana posterior; si no hay eventos posteriores, la salida puede
-seguir mostrando el estado de la ventana anterior.
+When a processor is recreated, events from before its start are not replayed.
+Use new events for testing. A window is emitted when the watermark advances to
+a later window; without later events, the output may continue to show the
+previous window's state.
 
-## Paso 4: cambiar una entrega
+## Step 4: Update a Delivery
 
-Actualiza una entrega desde el cluster Atlas:
+Update a delivery from the Atlas cluster:
 
 ```javascript
 db.taco_events.updateOne(
@@ -144,8 +144,7 @@ db.taco_events.updateOne(
 )
 ```
 
-Cuando haya comenzado el minuto siguiente, genera un evento posterior para
-avanzar el watermark:
+After the next minute begins, generate a later event to advance the watermark:
 
 ```javascript
 db.taco_events.updateOne(
@@ -154,32 +153,33 @@ db.taco_events.updateOne(
 )
 ```
 
-Los documentos sin `delivery_id` o sin `timestamp` de tipo fecha se descartan
-para evitar una salida con `_id: null`.
+Documents without `delivery_id` or a date-type `timestamp` are discarded to
+prevent output with `_id: null`.
 
-Tras cerrar la ventana de un minuto, consulta la vista:
+After the one-minute window closes, query the view:
 
 ```javascript
 db.taco_locations.find().sort({ _id: 1 }).pretty()
 ```
 
-Debe existir un documento por entrega, con `dist`, `updated_at` y `status`.
+There should be one document per delivery, containing `dist`, `updated_at`, and
+`status`.
 
-## Verificacion
+## Verification
 
-Comprueba que la vista contiene el estado mas reciente:
+Confirm that the view contains the latest state:
 
 ```javascript
 db.taco_locations.countDocuments()
 db.taco_locations.findOne({ _id: "taco-001" })
 ```
 
-El contador debe ser mayor que cero y `taco-001` debe mostrar `dist: 400` y
-`status: "delivered"` despues de que la ventana haya terminado.
+The count should be greater than zero, and `taco-001` should show `dist: 400`
+and `status: "delivered"` after the window closes.
 
-## Limpieza
+## Cleanup
 
-Desde el workspace ASP:
+From the ASP workspace:
 
 ```javascript
 sp.labTacoTracking.stop()
@@ -187,8 +187,8 @@ sp.labTacoTracking.drop()
 sp.listStreamProcessors()
 ```
 
-Desde el cluster Atlas, elimina las colecciones de practica si ya no las
-necesitas:
+From the Atlas cluster, remove the lab collections if they are no longer
+needed:
 
 ```javascript
 use playground
@@ -196,12 +196,13 @@ db.taco_events.drop()
 db.taco_locations.drop()
 ```
 
-## Ejercicios opcionales
+## Optional Exercises
 
-1. Cambia la ventana de un minuto a diez segundos.
-2. Ignora entregas con `status: "cancelled"`.
-3. Añade un contador de eventos por entrega.
-4. Inserta un evento con un timestamp antiguo y observa por que `$top` no lo
-	 selecciona como el estado mas reciente.
+1. Change the window from one minute to ten seconds.
+2. Ignore deliveries with `status: "cancelled"`.
+3. Add an event counter for each delivery.
+4. Insert an event with an older timestamp and observe why `$top` does not
+   select it as the latest state.
 
-Este laboratorio es una adaptacion local del articulo; no es codigo oficial del autor.
+This lab is a local adaptation of the referenced article and is not official
+code from the author.
