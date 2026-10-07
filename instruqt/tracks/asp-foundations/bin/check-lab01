@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
+for attempt in $(seq 1 10); do
+  valid="$(docker run --rm --network host -e ATLAS_URI="$ATLAS_URI" mongo:8.0 \
+    mongosh "$ATLAS_URI" --quiet --eval \
+    'db.getSiblingDB("playground").fast_start_events.countDocuments({ timestamp: { $type: "date" } })')"
+  if [[ "$valid" =~ ^[0-9]+$ ]] && (( valid > 0 )); then
+    printf 'PASS: %s event(s) have a date-type timestamp.\n' "$valid"
+    exit 0
+  fi
+  sleep 5
+done
+echo "FAIL: no valid time-series event arrived within 50 seconds." >&2
+exit 1

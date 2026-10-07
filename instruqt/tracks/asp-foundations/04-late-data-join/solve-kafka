@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Used only by `instruqt track test`; no external Atlas resources are modified.
+touch /tmp/instruqt-test-solved-lab04

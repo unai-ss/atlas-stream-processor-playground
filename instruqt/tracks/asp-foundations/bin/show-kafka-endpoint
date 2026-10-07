@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: "${_SANDBOX_ID:?This command must run inside an Instruqt sandbox}"
+printf 'kafka.%s.instruqt.io:9094\n' "$_SANDBOX_ID"
+printf 'Topics: temperature, humidity\n'
+printf 'Security: SASL_SSL / PLAIN; username: asp\n'
+printf 'Password (unique to this sandbox): '
+cat /opt/asp-kafka/kafka-password
+printf '\n'

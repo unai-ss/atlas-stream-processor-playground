@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
+: "${INSTRUQT_PARTICIPANT_ID:?This check must run inside Instruqt}"
+if [[ ! -s /tmp/asp-playground-run-id ]]; then
+  echo "Seed a controlled run before checking this challenge." >&2
+  exit 1
+fi
+run_id="$(< /tmp/asp-playground-run-id)"
+if [[ ! "$run_id" =~ ^asp-[A-Za-z0-9-]+$ ]]; then
+  echo "Invalid saved Lab 08 run ID." >&2
+  exit 2
+fi
+eval_code="const runId = '${run_id}';
+const database = db.getSiblingDB('playground');
+const serial = database.parallelism_serial_output.countDocuments({ run_id: runId });
+const parallel = database.parallelism_parallel_output.countDocuments({ run_id: runId });
+const serialDlq = database.parallelism_serial_dlq.countDocuments();
+const parallelDlq = database.parallelism_parallel_dlq.countDocuments();
+if (serial < 104 || parallel < 104 || serialDlq !== 0 || parallelDlq !== 0) {
+  printjson({ serial, parallel, serialDlq, parallelDlq });
+  print('FAIL: expected at least 104 output records in each sink and empty DLQs.');
+  quit(1);
+}
+printjson({ serial, parallel, serialDlq, parallelDlq });
+print('PASS: both processors completed the controlled run with no DLQ records.');"
+
+docker run --rm --network host -e ATLAS_URI="$ATLAS_URI" mongo:8.0 \
+  mongosh "$ATLAS_URI" --quiet --eval "$eval_code"

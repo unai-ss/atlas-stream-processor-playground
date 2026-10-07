@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
+  sleep 1
+done
+
+: "${ASP_URI:?Configure a participant-isolated ASP_URI Instruqt secret}"
+: "${ATLAS_URI:?Configure a participant-isolated ATLAS_URI Instruqt secret}"
+: "${ATLAS_KAFKA_ALLOWED_CIDRS:?Configure Atlas egress CIDRs for the ASP workspace region}"
+
+if ! command -v git >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1 || ! command -v openssl >/dev/null 2>&1 || ! command -v iptables >/dev/null 2>&1; then
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git jq curl ca-certificates openssl iptables
+fi
+
+for attempt in $(seq 1 30); do
+  if docker info >/dev/null 2>&1; then
+    break
+  fi
+  if [[ "$attempt" -eq 30 ]]; then
+    echo "Docker Engine did not become ready on the Instruqt VM." >&2
+    exit 1
+  fi
+  sleep 2
+done
+
+if [[ ! -d /opt/asp-playground/.git ]]; then
+  git clone --depth 1 --branch "${ASP_PLAYGROUND_REF:-main}" \
+    https://github.com/[redacted]/atlas-stream-processor-playground.git /opt/asp-playground
+fi
+  docker pull apache/kafka:4.0.0
+  docker pull mongo:8.0
+
+  umask 077
+  printf 'export ASP_URI=%q\nexport ATLAS_URI=%q\nexport ASP_PLAYGROUND_REF=%q\nexport ATLAS_KAFKA_ALLOWED_CIDRS=%q\n' \
+    "$ASP_URI" "$ATLAS_URI" "${ASP_PLAYGROUND_REF:-main}" "$ATLAS_KAFKA_ALLOWED_CIDRS" \
+    > /root/.asp-playground-secrets
+  chmod 0600 /root/.asp-playground-secrets
+
+/opt/asp-playground/instruqt/tracks/asp-foundations/bin/bootstrap-kafka

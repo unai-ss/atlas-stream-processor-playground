@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+topic="${1:?Usage: kafka-produce <temperature|humidity>}"
+case "$topic" in
+  temperature|humidity) ;;
+  *) echo "Topic must be temperature or humidity." >&2; exit 2 ;;
+esac
+
+echo "Enter one JSON event per line. Press Ctrl-D when finished."
+exec docker exec -i asp-kafka /opt/kafka/bin/kafka-console-producer.sh \
+  --bootstrap-server localhost:9094 \
+  --producer.config /etc/kafka/tls/client.properties \
+  --topic "$topic"

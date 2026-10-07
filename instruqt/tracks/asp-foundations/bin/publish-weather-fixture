@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${_SANDBOX_ID:?This command must run inside Instruqt}"
+: "${INSTRUQT_PARTICIPANT_ID:?This command must run inside Instruqt}"
+
+sensor_id="sensor-${INSTRUQT_PARTICIPANT_ID:0:8}"
+base_epoch="$(date -u +%s)"
+iso_at() { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+
+produce() {
+  local topic="$1"
+  shift
+  printf '%s\n' "$@" | docker exec -i asp-kafka \
+    /opt/kafka/bin/kafka-console-producer.sh \
+    --bootstrap-server localhost:9094 \
+    --producer.config /etc/kafka/tls/client.properties \
+    --property parse.key=true --property key.separator='|' \
+    --topic "$topic"
+}
+
+produce temperature \
+  "$sensor_id|{\"sensorIdGroup\":\"$sensor_id\",\"temperature\":21.5,\"timestamp\":\"$(iso_at "$base_epoch")\"}"
+produce humidity \
+  "$sensor_id|{\"sensorIdGroup\":\"$sensor_id\",\"humidity\":48.2,\"timestamp\":\"$(iso_at "$base_epoch")\"}"
+
+# Advance event time beyond the 30-second window before sending an older record.
+produce temperature \
+  "$sensor_id|{\"sensorIdGroup\":\"$sensor_id\",\"temperature\":22.1,\"timestamp\":\"$(iso_at "$((base_epoch + 40))")\"}"
+produce humidity \
+  "$sensor_id|{\"sensorIdGroup\":\"$sensor_id\",\"humidity\":49.0,\"timestamp\":\"$(iso_at "$((base_epoch + 40))")\"}"
+
+produce temperature \
+  "$sensor_id|{\"sensorIdGroup\":\"$sensor_id\",\"temperature\":23.7,\"timestamp\":\"$(iso_at "$((base_epoch + 2))")\"}"
+
+printf 'Published on-time and late events for %s. Inspect sensor_weather and sensor_dlq.\n' "$sensor_id"
