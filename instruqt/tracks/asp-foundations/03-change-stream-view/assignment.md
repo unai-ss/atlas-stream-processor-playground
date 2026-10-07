@@ -1,16 +1,21 @@
 ---
 slug: change-stream-view
+id: 9z5m351zhq86
 type: challenge
 title: Lab 02 - Change Stream delivery view
 teaser: Build a materialized view of the latest delivery state.
 notes:
-  - type: text
-    contents: Change Streams report changes after the processor starts. Insert fresh test events during this exercise.
+- type: text
+  contents: Change Streams report changes after the processor starts. Insert fresh
+    test events during this exercise.
 tabs:
-  - title: Terminal
-    type: terminal
-    hostname: kafka
-    workdir: /opt/asp-playground
+- id: jn6h0vheve5y
+  title: Terminal
+  type: terminal
+  hostname: kafka
+  workdir: /opt/asp-playground
+difficulty: ""
+enhanced_loading: null
 ---
 
 # Lab 02: Change Stream delivery view

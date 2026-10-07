@@ -1,14 +1,25 @@
 slug: asp-foundations
-type: track
+id: s1d2naqe1qbx
 title: USS Atlas Stream Processing TSE Lab
 teaser: Build and validate stream processors with Atlas Stream Processing
 description: |
-  Work through Atlas Stream Processing fundamentals using Sample, MongoDB Change Streams, and a Docker-backed Kafka broker. The track requires a dedicated test Atlas project and participant-isolated Stream Processing workspace.
+  Use Atlas CLI from the Docker-enabled sandbox to provision a dedicated test cluster and Stream Processing workspace, then learn Atlas Stream Processing with Sample, MongoDB Change Streams, and a Docker-backed Kafka broker.
+icon: https://cdn.instruqt.com/assets/templates/ubuntu.png
 tags:
-  - mongodb
-  - atlas
-  - stream-processing
-  - kafka
+- mongodb
+- stream-processing
+- kafka
+- atlas
 owner: mongodb-ts-dev
-# Pull or initialize the track with the Instruqt CLI before publishing so the
-# platform can add the organization owner and track ID.
+developers:
+- [redacted]@mongodb.com
+idle_timeout: 300
+timelimit: 1200
+lab_config:
+  sidebar_enabled: true
+  feedback_recap_enabled: true
+  feedback_tab_enabled: false
+  loadingMessages: true
+  hideStopButton: false
+checksum: "9401491216794419730"
+enhanced_loading: false

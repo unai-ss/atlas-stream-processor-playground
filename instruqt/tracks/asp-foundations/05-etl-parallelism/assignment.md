@@ -1,16 +1,21 @@
 ---
 slug: etl-parallelism
+id: pagp2ci5a9vv
 type: challenge
 title: Lab 08 - ETL parallelism
 teaser: Compare serial and parallel sink processing with a controlled workload.
 notes:
-  - type: text
-    contents: Validate output and DLQ before comparing throughput. Results are specific to this workspace and run.
+- type: text
+  contents: Validate output and DLQ before comparing throughput. Results are specific
+    to this workspace and run.
 tabs:
-  - title: Terminal
-    type: terminal
-    hostname: kafka
-    workdir: /opt/asp-playground
+- id: b1j2bypvvzrj
+  title: Terminal
+  type: terminal
+  hostname: kafka
+  workdir: /opt/asp-playground
+difficulty: ""
+enhanced_loading: null
 ---
 
 # Lab 08: ETL parallelism

@@ -1,16 +1,21 @@
 ---
 slug: sample-to-atlas
+id: jx0jit4zptc9
 type: challenge
 title: Lab 01 - Sample to Atlas
 teaser: Inspect Sample events and persist a normalized stream to Atlas.
 notes:
-  - type: text
-    contents: Use only the participant's test workspace and test cluster. Do not use production data.
+- type: text
+  contents: Use only the participant's test workspace and test cluster. Do not use
+    production data.
 tabs:
-  - title: Terminal
-    type: terminal
-    hostname: kafka
-    workdir: /opt/asp-playground
+- id: qk4opww1lxik
+  title: Terminal
+  type: terminal
+  hostname: kafka
+  workdir: /opt/asp-playground
+difficulty: ""
+enhanced_loading: null
 ---
 
 # Lab 01: Sample to Atlas

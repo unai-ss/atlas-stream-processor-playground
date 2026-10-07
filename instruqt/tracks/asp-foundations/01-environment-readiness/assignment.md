@@ -1,16 +1,21 @@
 ---
 slug: environment-readiness
+id: q6ad3vzyxjpc
 type: challenge
 title: Lab 00 - Create your Atlas environment
 teaser: Provision a dedicated Atlas cluster and Stream Processing workspace.
 notes:
-  - type: text
-    contents: Use a dedicated non-production Atlas project. You create the Atlas resources from this sandbox with Atlas CLI.
+- type: text
+  contents: Use a dedicated non-production Atlas project. You create the Atlas resources
+    from this sandbox with Atlas CLI.
 tabs:
-  - title: Terminal
-    type: terminal
-    hostname: kafka
-    workdir: /opt/asp-playground
+- id: wznuhjnhh8ug
+  title: Terminal
+  type: terminal
+  hostname: kafka
+  workdir: /opt/asp-playground
+difficulty: ""
+enhanced_loading: null
 ---
 
 # Lab 00: Create your Atlas environment

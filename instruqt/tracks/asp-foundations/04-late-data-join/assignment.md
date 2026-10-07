@@ -1,16 +1,21 @@
 ---
 slug: late-data-join
+id: wyib0d9pqxig
 type: challenge
 title: Lab 04 - Kafka late-data join
 teaser: Join temperature and humidity streams and inspect late-event repair.
 notes:
-  - type: text
-    contents: Kafka runs in the Docker-enabled Instruqt VM. Atlas must be able to reach its public DNS endpoint on TCP 9094.
+- type: text
+  contents: Kafka runs in the Docker-enabled Instruqt VM. Atlas must be able to reach
+    its public DNS endpoint on TCP 9094.
 tabs:
-  - title: Terminal
-    type: terminal
-    hostname: kafka
-    workdir: /opt/asp-playground
+- id: 7ep0sgenwc0v
+  title: Terminal
+  type: terminal
+  hostname: kafka
+  workdir: /opt/asp-playground
+difficulty: ""
+enhanced_loading: null
 ---
 
 # Lab 04: Kafka late-data join
