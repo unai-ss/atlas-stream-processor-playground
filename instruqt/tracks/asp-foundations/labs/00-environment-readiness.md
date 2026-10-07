@@ -1,22 +1,23 @@
-# Lab 00: Environment readiness
+# Lab 00: Atlas infrastructure provisioning
 
 **Source:** [`projects/00-assessment`](../../../../projects/00-assessment/)
 
 ## Learner outcome
 
-Confirm the test Atlas project, ASP workspace, required connections, and database permissions are available before running processors.
+Create the test cluster, database user, ASP workspace, and required connections with Atlas CLI from the Docker-enabled Instruqt VM. Labs 01, 02, 04, and 08 consume these resources.
 
 ## Instruqt adaptation
 
-- Present this as a readiness gate, not as a request for learners to enter or paste credentials.
-- Check the environment's preconfigured access using a non-destructive command or fixture.
-- Report missing prerequisites clearly and stop the track step if the environment is not ready.
-- Keep the existing automated-assessment contract as a separate future exercise unless the track needs to assess learner-submitted processors.
+- Ask the learner to provide a dedicated, non-production Atlas `PROJECT_ID`; Lab 00 does not create the Atlas project itself.
+- Install Atlas CLI in the sandbox VM and show the tested provisioning commands from `projects/00-assessment/MANUAL.md`, using learner-supplied project details.
+- Do not copy local `.env` values, project identifiers, or connection URIs into the assignment.
+- Store resulting connection URIs in a permission-restricted per-sandbox file, not shared Instruqt team secrets.
+- Bootstrap Kafka only after the learner provides the current Atlas egress CIDRs for the workspace region.
 
 ## Success evidence
 
-The workspace and expected connections are available, the learner can run the approved read/write smoke check, and no secret value is printed.
+The learner-created cluster and workspace are ready, the `sample_stream_solar` and `atlas_lab` connections are available, Atlas connectivity succeeds, and no secret value is printed.
 
 ## Cleanup
 
-Do not remove shared Atlas or ASP infrastructure from a readiness check. Clean up only temporary test data created by that check.
+Delete only the cluster, workspace, connections, and data created for this learner's run. Never remove pre-existing or shared resources.

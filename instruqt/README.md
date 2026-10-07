@@ -11,7 +11,7 @@ This directory contains the Instruqt adaptation of the Atlas Stream Processing p
 The content here is a draft and must be validated in the team's Instruqt organization before publishing. In particular:
 
 - Confirm the Instruqt CLI and track schema version used by the team.
-- Configure per-participant Atlas/ASP access and deliver credentials through Instruqt secrets.
+- Have each learner provision Atlas resources from the sandbox with Atlas CLI; do not deliver shared Atlas credentials through Instruqt team secrets.
 - Confirm the Docker VM's public hostname, TLS certificate, and TCP 9094 reachability from Atlas.
 - Pin the sandbox's `ASP_PLAYGROUND_REF` to a commit containing the track files.
 - Validate setup, challenge, and cleanup scripts with a full sandbox run.

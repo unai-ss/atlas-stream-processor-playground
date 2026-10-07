@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
 if [[ -f /tmp/instruqt-test-solved-environment ]]; then
   echo "PASS: simulated solve path used by Instruqt track test."
   exit 0
 fi
+source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
 /opt/asp-playground/instruqt/tracks/asp-foundations/bin/check-atlas-access
 connections="$(docker run --rm --network host -e ASP_URI="$ASP_URI" mongo:8.0 \
   mongosh "$ASP_URI" --quiet --eval 'printjson(sp.listConnections())')"

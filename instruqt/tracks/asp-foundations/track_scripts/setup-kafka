@@ -5,13 +5,23 @@ until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
   sleep 1
 done
 
-: "${ASP_URI:?Configure a participant-isolated ASP_URI Instruqt secret}"
-: "${ATLAS_URI:?Configure a participant-isolated ATLAS_URI Instruqt secret}"
-: "${ATLAS_KAFKA_ALLOWED_CIDRS:?Configure Atlas egress CIDRs for the ASP workspace region}"
-
-if ! command -v git >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1 || ! command -v openssl >/dev/null 2>&1 || ! command -v iptables >/dev/null 2>&1; then
+if ! command -v git >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1 || ! command -v openssl >/dev/null 2>&1 || ! command -v iptables >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
   apt-get update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git jq curl ca-certificates openssl iptables
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git jq curl ca-certificates openssl iptables gnupg sudo
+fi
+
+if ! command -v atlas >/dev/null 2>&1; then
+  . /etc/os-release
+  if [[ "$ID" != "ubuntu" || ( "$VERSION_CODENAME" != "jammy" && "$VERSION_CODENAME" != "noble" ) ]]; then
+    echo "Atlas CLI setup supports Ubuntu 22.04 and 24.04 on this track." >&2
+    exit 1
+  fi
+  curl -fsSL https://pgp.mongodb.com/server-8.0.asc | \
+    gpg --dearmor --yes -o /usr/share/keyrings/mongodb-server-8.0.gpg
+  echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.com/apt/ubuntu ${VERSION_CODENAME}/mongodb-enterprise/8.0 multiverse" \
+    > /etc/apt/sources.list.d/mongodb-enterprise-8.0.list
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq mongodb-atlas-cli
 fi
 
 for attempt in $(seq 1 30); do
@@ -31,11 +41,3 @@ if [[ ! -d /opt/asp-playground/.git ]]; then
 fi
   docker pull apache/kafka:4.0.0
   docker pull mongo:8.0
-
-  umask 077
-  printf 'export ASP_URI=%q\nexport ATLAS_URI=%q\nexport ASP_PLAYGROUND_REF=%q\nexport ATLAS_KAFKA_ALLOWED_CIDRS=%q\n' \
-    "$ASP_URI" "$ATLAS_URI" "${ASP_PLAYGROUND_REF:-main}" "$ATLAS_KAFKA_ALLOWED_CIDRS" \
-    > /root/.asp-playground-secrets
-  chmod 0600 /root/.asp-playground-secrets
-
-/opt/asp-playground/instruqt/tracks/asp-foundations/bin/bootstrap-kafka

@@ -18,10 +18,9 @@ Detailed adaptation briefs are in [`labs/`](labs/).
 
 ## Environment decisions required
 
-- Provide a dedicated, non-production Atlas project and ASP workspace for learner runs.
-- Provide a participant-isolated ASP workspace, or a secure automation layer that registers each sandbox's unique Kafka endpoint in that participant's workspace.
-- Configure `ASP_URI` and `ATLAS_URI` as Instruqt secrets, but do not reuse one workspace/URI concurrently across learners. Instruqt track secrets are static; multi-participant runs require an external provisioning/injection service that creates isolated Atlas resources or assigns unique workspaces per learner.
-- Provide `ASP_URI` and `ATLAS_URI` through per-sandbox secret injection; a shared track-level secret is suitable only for a single controlled learner at a time.
+- Have each learner use Atlas CLI from the sandbox VM to provision resources in a dedicated, non-production Atlas project during Lab 00.
+- Keep Atlas connection URIs and the workspace's Kafka egress CIDRs in a permission-restricted, per-sandbox file; do not configure them as shared Instruqt team secrets.
+- Use a unique ASP workspace per learner so each sandbox can register its own Kafka endpoint without conflicts.
 - Set resource quotas, time limits, cleanup ownership, and recovery behavior for interrupted runs.
 - Confirm that Atlas can reach each Kafka VM's public DNS endpoint on TCP 9094 and permit the documented Atlas egress addresses at the broker/network layer.
 - Set `ATLAS_KAFKA_ALLOWED_CIDRS` to the current Atlas egress CIDRs for the selected ASP workspace region; the host firewall fails closed if it is missing.
@@ -33,4 +32,4 @@ Each lab should specify prerequisites, learner steps, deterministic success crit
 
 ## Publication status
 
-Draft implementation for the `mongodb-ts-dev` Instruqt organization. `track.yml`, `config.yml`, the Docker Kafka bootstrap script, helpers, and five challenge assignments are included. Initialize or pull the track in that organization so Instruqt assigns track/challenge IDs, then pin `ASP_PLAYGROUND_REF` to a commit containing this folder. The Instruqt CLI is installed and authenticated; local `instruqt track validate` passes. A full sandbox test still requires `ASP_PLAYGROUND_REF` to resolve to a commit containing these files, dedicated non-production `ASP_URI`/`ATLAS_URI` values, and current Atlas egress CIDRs in `ATLAS_KAFKA_ALLOWED_CIDRS`. This is not ready for concurrent public use until an external provisioning integration supplies participant-isolated resources and registers each sandbox's Kafka endpoint in the correct ASP Connection Registry. Test a real Atlas-to-Kafka connection before publishing.
+Draft implementation for the `mongodb-ts-dev` Instruqt organization. Lab 00 is responsible for learner-driven Atlas provisioning with Atlas CLI; the Docker VM prepares the CLI and broker tools but does not create Atlas resources. Initialize or pull the track in that organization so Instruqt assigns track/challenge IDs. A real end-to-end sandbox run still requires a dedicated non-production Atlas project per learner, a unique ASP workspace, and the current Atlas egress CIDRs for that workspace before the learner starts Kafka. Do not publish for concurrent use until resource isolation and cleanup have been verified.
