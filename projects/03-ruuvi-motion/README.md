@@ -63,7 +63,7 @@ mongosh "$ATLAS_URI"
 In that session, run:
 
 ```javascript
-load("[local-repository]/scripts/03-seed-ruuvi.js")
+load("scripts/03-seed-ruuvi.js")
 ```
 
 The seeder inserts six readings from two sensors, one per second. Run it after
@@ -74,7 +74,7 @@ starting the processor so the changes appear in the Change Stream.
 In another session, connect `mongosh` to the ASP workspace and run:
 
 ```javascript
-load('[local-repository]/projects/03-ruuvi-motion/processor.js')
+load("projects/03-ruuvi-motion/processor.js")
 sp.labRuuviMotion.start()
 sp.labRuuviMotion.stats()
 ```
@@ -82,7 +82,7 @@ sp.labRuuviMotion.stats()
 Then return to the Atlas cluster session and run the seeder:
 
 ```javascript
-load("[local-repository]/scripts/03-seed-ruuvi.js")
+load("scripts/03-seed-ruuvi.js")
 ```
 
 The results are materialized in `playground.ruuvi_motion`, with one document

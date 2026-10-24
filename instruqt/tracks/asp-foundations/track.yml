@@ -1,18 +1,15 @@
 slug: asp-foundations
-id: s1d2naqe1qbx
+id: uob1t0xhznxo
 title: USS Atlas Stream Processing TSE Lab
 teaser: Build and validate stream processors with Atlas Stream Processing
 description: |
-  Use Atlas CLI from the Docker-enabled sandbox to provision a dedicated test cluster and Stream Processing workspace, then learn Atlas Stream Processing with Sample, MongoDB Change Streams, and a Docker-backed Kafka broker.
+  Use Atlas CLI from the workstation sandbox to provision a dedicated test cluster and Stream Processing workspace, then learn Atlas Stream Processing with Sample, MongoDB Change Streams, and controlled parallel processing.
 icon: https://cdn.instruqt.com/assets/templates/ubuntu.png
 tags:
 - mongodb
 - stream-processing
-- kafka
 - atlas
 owner: mongodb-ts-dev
-developers:
-- [redacted]@mongodb.com
 idle_timeout: 300
 timelimit: 1200
 lab_config:
@@ -21,5 +18,5 @@ lab_config:
   feedback_tab_enabled: false
   loadingMessages: true
   hideStopButton: false
-checksum: "9401491216794419730"
+checksum: "12220259635226664378"
 enhanced_loading: false

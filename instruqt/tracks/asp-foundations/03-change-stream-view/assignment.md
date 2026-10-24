@@ -1,6 +1,6 @@
 ---
 slug: change-stream-view
-id: 9z5m351zhq86
+id: czkrv7oadi8y
 type: challenge
 title: Lab 02 - Change Stream delivery view
 teaser: Build a materialized view of the latest delivery state.
@@ -9,10 +9,10 @@ notes:
   contents: Change Streams report changes after the processor starts. Insert fresh
     test events during this exercise.
 tabs:
-- id: jn6h0vheve5y
+- id: qansjsll4vvp
   title: Terminal
   type: terminal
-  hostname: kafka
+  hostname: workstation
   workdir: /opt/asp-playground
 difficulty: ""
 enhanced_loading: null
@@ -33,7 +33,7 @@ In the ASP shell, load and start the processor before inserting records:
 ```
 
 ```javascript
-load("/workspace/projects/02-taco-tracking/processor.js")
+load("/opt/asp-playground/projects/02-taco-tracking/processor.js")
 sp.labTacoTracking.start()
 sp.labTacoTracking.stats()
 ```

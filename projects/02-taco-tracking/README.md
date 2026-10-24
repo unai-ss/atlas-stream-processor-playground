@@ -53,7 +53,7 @@ You will need:
 - the `playground.taco_events` collection.
 
 To connect to the Atlas cluster, use the full URI, which includes the
-credentials for `stream[redacted]`:
+credentials for `streamUser`:
 
 ```bash
 mongosh "$ATLAS_URI"
@@ -113,7 +113,7 @@ While the command is running, insert another event and inspect its
 Reconnect to the ASP workspace and load the processor:
 
 ```javascript
-load("[local-repository]/projects/02-taco-tracking/processor.js")
+load("projects/02-taco-tracking/processor.js")
 sp.labTacoTracking.start()
 sp.labTacoTracking.stats()
 sp.labTacoTracking.sample()

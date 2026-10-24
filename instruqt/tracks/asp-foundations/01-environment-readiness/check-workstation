@@ -6,8 +6,7 @@ if [[ -f /tmp/instruqt-test-solved-environment ]]; then
 fi
 source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
 /opt/asp-playground/instruqt/tracks/asp-foundations/bin/check-atlas-access
-connections="$(docker run --rm --network host -e ASP_URI="$ASP_URI" mongo:8.0 \
-  mongosh "$ASP_URI" --quiet --eval 'printjson(sp.listConnections())')"
+connections="$(mongosh "$ASP_URI" --quiet --eval 'printjson(sp.listConnections())')"
 for required in sample_stream_solar atlas_lab; do
   if ! grep -q "$required" <<<"$connections"; then
     echo "FAIL: required ASP connection is missing: $required" >&2

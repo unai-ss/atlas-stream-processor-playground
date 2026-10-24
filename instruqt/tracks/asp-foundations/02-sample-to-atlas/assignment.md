@@ -1,6 +1,6 @@
 ---
 slug: sample-to-atlas
-id: jx0jit4zptc9
+id: nmfd345fxz6x
 type: challenge
 title: Lab 01 - Sample to Atlas
 teaser: Inspect Sample events and persist a normalized stream to Atlas.
@@ -9,10 +9,10 @@ notes:
   contents: Use only the participant's test workspace and test cluster. Do not use
     production data.
 tabs:
-- id: qk4opww1lxik
+- id: pyfei5ngqesn
   title: Terminal
   type: terminal
-  hostname: kafka
+  hostname: workstation
   workdir: /opt/asp-playground
 difficulty: ""
 enhanced_loading: null
@@ -51,7 +51,7 @@ The processor definition is in:
 Load and start it in the ASP shell:
 
 ```javascript
-load("/workspace/projects/01-fast-start/processor.js")
+load("/opt/asp-playground/projects/01-fast-start/processor.js")
 sp.labFastStart.start()
 sp.labFastStart.stats()
 sp.labFastStart.sample()

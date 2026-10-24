@@ -1,6 +1,6 @@
 # Lab 01: Sample to Atlas
 
-**Source:** [`projects/01-fast-start`](../../../../projects/01-fast-start/)
+**Source:** [Processor snapshot](../../../projects/01-fast-start/processor.js)
 
 ## Learner outcome
 

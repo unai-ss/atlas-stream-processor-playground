@@ -1,6 +1,6 @@
 ---
 slug: environment-readiness
-id: q6ad3vzyxjpc
+id: ioqpmyf2xbje
 type: challenge
 title: Lab 00 - Create your Atlas environment
 teaser: Provision a dedicated Atlas cluster and Stream Processing workspace.
@@ -9,10 +9,10 @@ notes:
   contents: Use a dedicated non-production Atlas project. You create the Atlas resources
     from this sandbox with Atlas CLI.
 tabs:
-- id: wznuhjnhh8ug
+- id: sma7htfmuz8s
   title: Terminal
   type: terminal
-  hostname: kafka
+  hostname: workstation
   workdir: /opt/asp-playground
 difficulty: ""
 enhanced_loading: null
@@ -22,13 +22,13 @@ enhanced_loading: null
 
 ## Outcome
 
-Create the Atlas resources used by Labs 01, 02, 04, and 08. The Docker VM prepares the command-line tools; you create the cluster, database user, ASP workspace, and connections with Atlas CLI.
+Create the Atlas resources used by Labs 01, 02, and 08. The workstation provides Atlas CLI and `mongosh`; you create the cluster, database user, ASP workspace, and connections with Atlas CLI.
 
 ## Before you begin
 
 - Use an existing, dedicated, non-production Atlas project where you can create clusters, database users, and Stream Processing workspaces. This lab does not create the Atlas project itself.
 - Use a project reserved for this track run. The labs use fixed database and connection names.
-- Atlas CLI, `jq`, and Docker are available in the sandbox.
+- Atlas CLI, `mongosh`, and `jq` are available in the sandbox.
 - Resource creation may take several minutes and Atlas resources may incur charges.
 
 ## 1. Authenticate and select your project
@@ -147,13 +147,13 @@ atlas api streams getStreamWorkspace \
 
 Use the Atlas UI to complete the cluster URI with your database user. Build the ASP URI from the returned workspace hostname and the same database credentials. Do not print either URI.
 
-Run the secret helper and enter both URIs plus the current Atlas egress CIDRs for this workspace region when prompted:
+Run the secret helper and enter both URIs when prompted:
 
 ```bash
 bash ./instruqt/tracks/asp-foundations/bin/save-atlas-secrets
 ```
 
-The helper stores those values in a permission-restricted file for this sandbox and starts the Docker Kafka broker. If the Atlas egress CIDRs are not known yet, stop here and obtain them before opening Kafka ingress.
+The helper stores those values in a permission-restricted file for this sandbox.
 
 Create the Lab 01 time-series sink:
 
@@ -183,7 +183,7 @@ In the ASP shell:
 sp.listConnections()
 ```
 
-Confirm `sample_stream_solar` and `atlas_lab` are present. Lab 04 creates and validates the Kafka connection after you inspect the broker endpoint.
+Confirm `sample_stream_solar` and `atlas_lab` are present.
 
 Press **Check** when the Atlas connection and required ASP connections are ready.
 

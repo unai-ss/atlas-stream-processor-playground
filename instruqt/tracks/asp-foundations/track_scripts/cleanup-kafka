@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-docker rm --force asp-kafka >/dev/null 2>&1 || true
-docker volume rm asp-kafka-data >/dev/null 2>&1 || true
-rm -rf /opt/asp-kafka /etc/asp-kafka
-rm -f /tmp/asp-playground-secrets

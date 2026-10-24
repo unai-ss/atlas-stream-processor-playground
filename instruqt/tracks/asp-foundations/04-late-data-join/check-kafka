@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-if [[ -f /tmp/instruqt-test-solved-lab04 ]]; then
-  echo "PASS: simulated solve path used by Instruqt track test."
-  exit 0
-fi
-/opt/asp-playground/instruqt/tracks/asp-foundations/bin/check-lab04

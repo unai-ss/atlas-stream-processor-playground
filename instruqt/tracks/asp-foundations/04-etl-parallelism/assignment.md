@@ -1,6 +1,6 @@
 ---
 slug: etl-parallelism
-id: pagp2ci5a9vv
+id: xcrfdmqmomgl
 type: challenge
 title: Lab 08 - ETL parallelism
 teaser: Compare serial and parallel sink processing with a controlled workload.
@@ -9,10 +9,10 @@ notes:
   contents: Validate output and DLQ before comparing throughput. Results are specific
     to this workspace and run.
 tabs:
-- id: b1j2bypvvzrj
+- id: 5iepua4qub53
   title: Terminal
   type: terminal
-  hostname: kafka
+  hostname: workstation
   workdir: /opt/asp-playground
 difficulty: ""
 enhanced_loading: null
@@ -54,7 +54,7 @@ In the ASP shell:
 ```
 
 ```javascript
-load("/workspace/projects/08-parallelism/processor-change-stream.js")
+load("/opt/asp-playground/projects/08-parallelism/processor-change-stream.js")
 sp.labParallelismSerial.start()
 sp.labParallelismWorkers.start()
 sp.labParallelismSerial.stats()

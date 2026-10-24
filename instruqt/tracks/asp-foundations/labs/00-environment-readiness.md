@@ -1,18 +1,17 @@
 # Lab 00: Atlas infrastructure provisioning
 
-**Source:** [`projects/00-assessment`](../../../../projects/00-assessment/)
+**Source:** [Lab 00 assignment](../01-environment-readiness/assignment.md)
 
 ## Learner outcome
 
-Create the test cluster, database user, ASP workspace, and required connections with Atlas CLI from the Docker-enabled Instruqt VM. Labs 01, 02, 04, and 08 consume these resources.
+Create the test cluster, database user, ASP workspace, and required connections with Atlas CLI from the workstation VM. Labs 01, 02, and 08 consume these resources.
 
 ## Instruqt adaptation
 
 - Ask the learner to provide a dedicated, non-production Atlas `PROJECT_ID`; Lab 00 does not create the Atlas project itself.
-- Install Atlas CLI in the sandbox VM and show the tested provisioning commands from `projects/00-assessment/MANUAL.md`, using learner-supplied project details.
+- Provide Atlas CLI, `mongosh`, and `jq` in the workstation image. Show the tested provisioning commands from `projects/00-assessment/MANUAL.md`, using learner-supplied project details.
 - Do not copy local `.env` values, project identifiers, or connection URIs into the assignment.
 - Store resulting connection URIs in a permission-restricted per-sandbox file, not shared Instruqt team secrets.
-- Bootstrap Kafka only after the learner provides the current Atlas egress CIDRs for the workspace region.
 
 ## Success evidence
 

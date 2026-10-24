@@ -2,8 +2,7 @@
 set -euo pipefail
 source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
 for attempt in $(seq 1 10); do
-  output="$(docker run --rm --network host -e ATLAS_URI="$ATLAS_URI" mongo:8.0 \
-    mongosh "$ATLAS_URI" --quiet --eval \
+  output="$(mongosh "$ATLAS_URI" --quiet --eval \
     'const latest = db.getSiblingDB("playground").taco_locations.findOne({ _id: "taco-001" }); print(latest && latest.dist === 400 && latest.status === "delivered" ? "PASS" : "WAIT")')"
   if [[ "$output" == "PASS" ]]; then
     echo "PASS: materialized view contains the latest delivery state."

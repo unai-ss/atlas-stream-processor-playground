@@ -15,11 +15,11 @@ connection strings ni capturas con secretos en tickets, commits o chats.
 
 | Recurso | Nombre |
 |---|---|
-| Atlas project | `[redacted]` |
-| Project id | `658d4a0cfdc68a319efa586a` |
-| Cluster | `Cluster0` |
+| Atlas project | `xxxxxxxxxxx` |
+| Project id | `xxxxxxxxxxxx` |
+| Cluster | `xxxxxxxx` |
 | Cluster tier | `M0` |
-| ASP workspace | `asp-lab01-gcp-us-west1` |
+| ASP workspace | `xxxxxxxxxx` |
 | ASP tier | `SP2` |
 | Sample source | `sample_stream_solar` |
 | Atlas sink connection | `atlas_lab` |
@@ -38,7 +38,7 @@ atlas auth whoami
 Si la sesión ha caducado, ejecuta de nuevo `atlas auth login`.
 
 ```bash
-cd [local-repository]
+cd ~/Documents/atlas-stream-processor-playground
 source .env
 
 export CLUSTER_NAME="Cluster0"
@@ -122,19 +122,19 @@ crear uno nuevo, usa una contrasena local que no se guarde en Git ni en el
 historial de shell:
 
 ```bash
-printf 'Password for stream[redacted]: '
+printf 'Password for streamUser: '
 read -r -s DB_PASSWORD
 printf '\n'
 
 atlas dbusers create atlasAdmin \
   --projectId "$PROJECT_ID" \
-  --username stream[redacted] \
+  --username streamUser \
   --password "$DB_PASSWORD"
 
 unset DB_PASSWORD
 ```
 
-Para este laboratorio, `stream[redacted]` debe tener el rol `readWrite` sobre la
+Para este laboratorio, `streamUser` debe tener el rol `readWrite` sobre la
 base de datos `playground`. El usuario del Atlas CLI y el usuario de MongoDB
 son identidades distintas.
 
@@ -282,12 +282,12 @@ Conecta con `mongosh`:
 mongosh "mongodb://$ASP_HOST/" \
   --tls \
   --authenticationDatabase admin \
-  --username stream[redacted] \
+  --username streamUser \
   --password
 ```
 
-El usuario de base de datos usado por este playground es `stream[redacted]`. La
-cuenta `[redacted]` se usa para autenticarse con Atlas CLI.
+El usuario de base de datos usado por este playground es `streamUser`. La
+cuenta `xxxxxxxxx` se usa para autenticarse con Atlas CLI.
 Escribe la contrasena directamente en la terminal cuando `mongosh` la pida.
 
 ## Paso 8: validar la infraestructura

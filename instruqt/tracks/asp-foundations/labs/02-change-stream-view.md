@@ -1,6 +1,6 @@
 # Lab 02: Change Stream delivery view
 
-**Source:** [`projects/02-taco-tracking`](../../../../projects/02-taco-tracking/)
+**Source:** [Processor snapshot](../../../projects/02-taco-tracking/processor.js)
 
 ## Learner outcome
 

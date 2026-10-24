@@ -8,7 +8,7 @@ Antes de ejecutar comandos Atlas, registra la sesión desde la consola con
 `atlas auth login` y confirma con `atlas auth whoami`.
 
 Este manual permite repetir el laboratorio 02 desde cero usando el proyecto Atlas
-`[redacted]`, el project id configurado en `.env`, un cluster M0 llamado
+`xxxxxxxxxxx`, el project id configurado en `.env`, un cluster M0 llamado
 `Cluster0` y un workspace ASP llamado `asp-lab02-gcp-us-west1`.
 
 El laboratorio transforma cambios de `playground.taco_events` en una vista
@@ -31,15 +31,15 @@ completas ni evidencias sin redactar en GitHub.
 
 | Recurso | Nombre |
 |---|---|
-| Atlas project | `[redacted]` |
+| Atlas project | `xxxxxxxxxxxxxxx` |
 | Project id | valor de `PROJECT_ID` en `.env` |
-| Cluster | `Cluster0` |
+| Cluster | `xxxxxxxxxxx` |
 | Cluster tier | `M0` |
 | ASP workspace | `asp-lab02-gcp-us-west1` |
 | ASP tier | `SP2` |
 | Atlas connection | `atlas_lab` |
-| Atlas CLI user | `[redacted]` |
-| MongoDB user | `stream[redacted]` |
+| Atlas CLI user | `xxxxxxx` |
+| MongoDB user | `xxxxxxxx` |
 | Processor | `labTacoTracking` |
 | Input namespace | `playground.taco_events` |
 | Output namespace | `playground.taco_locations` |
@@ -49,7 +49,7 @@ completas ni evidencias sin redactar en GitHub.
 En una terminal del proyecto:
 
 ```bash
-cd [local-repository]
+cd ~/Documents/atlas-stream-processor-playground
 source .env
 
 export CLUSTER_NAME="Cluster0"
@@ -84,9 +84,9 @@ atlas auth login
 
 El login de Atlas CLI y el usuario de `mongosh` son identidades distintas:
 
-- `[redacted]` es la cuenta de Atlas CLI para gestionar el proyecto, el
+- `xxxxxxxxx` es la cuenta de Atlas CLI para gestionar el proyecto, el
   cluster y el workspace ASP.
-- `stream[redacted]` es el usuario de base de datos, autenticado con contraseña para
+- `streamUser` es el usuario de base de datos, autenticado con contraseña para
   `mongosh` y para la conexión `atlas_lab`.
 
 ## Paso 1: comprobar y preparar los clusters
@@ -161,19 +161,19 @@ una región M0 indicada por el error del CLI.
 Comprueba que existe el usuario, sin mostrar la contraseña:
 
 ```bash
-atlas dbusers describe "stream[redacted]" \
+atlas dbusers describe "streamUser" \
   --projectId "$PROJECT_ID" \
   --output json | jq '{username, databaseName, roles}'
 ```
 
 El usuario debe tener como minimo el rol `readWrite` sobre la base de datos
 `playground`. Si la salida no muestra ese rol, abre Atlas UI > Database Access,
-edita `stream[redacted]` y añade el rol integrado `readWrite` con `playground` como
+edita `streamUser` y añade el rol integrado `readWrite` con `playground` como
 base de datos. Guarda el cambio y vuelve a conectar `mongosh`.
 
 El rol `atlasAdmin` de `dbRoleToExecute` en la conexion `atlas_lab` es
 independiente: autoriza al processor ASP y no cambia los permisos del usuario
-`stream[redacted]` cuando se conecta directamente al cluster.
+`streamUser` cuando se conecta directamente al cluster.
 
 Conecta al cluster Atlas:
 
@@ -181,7 +181,7 @@ Conecta al cluster Atlas:
 mongosh "$ATLAS_URI"
 ```
 
-`ATLAS_URI` ya contiene las credenciales de `stream[redacted]`. Dentro de `mongosh`,
+`ATLAS_URI` ya contiene las credenciales de `streamUser`. Dentro de `mongosh`,
 comprueba la identidad:
 
 ```javascript
@@ -310,7 +310,7 @@ En una segunda terminal, conecta al workspace ASP con el mismo usuario MongoDB:
 mongosh "mongodb://$ASP_HOST/" \
   --tls \
   --authenticationDatabase admin \
-  --username "stream[redacted]" \
+  --username "streamUser" \
   --password
 ```
 
@@ -338,7 +338,7 @@ inicio; no reprocesa automaticamente los eventos antiguos.
 En la sesión ASP carga el archivo una sola vez:
 
 ```javascript
-load("[local-repository]/projects/02-taco-tracking/processor.js")
+load("projects/02-taco-tracking/processor.js")
 sp.listStreamProcessors()
 ```
 

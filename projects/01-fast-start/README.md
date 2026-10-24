@@ -63,7 +63,7 @@ You will need:
   collection with `timestamp` as its `timeField`.
 
 To access the Atlas cluster, use the URI that already contains the credentials
-for `stream[redacted]`:
+for `streamUser`:
 
 ```bash
 mongosh "$ATLAS_URI"
@@ -109,7 +109,7 @@ workspace and does not create persistent resources.
 Load the definition from `mongosh` connected to the workspace:
 
 ```javascript
-load("[local-repository]/projects/01-fast-start/processor.js")
+load("projects/01-fast-start/processor.js")
 ```
 
 The file creates `labFastStart` with these stages:

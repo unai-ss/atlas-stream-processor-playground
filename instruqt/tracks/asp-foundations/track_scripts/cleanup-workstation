@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+rm -f /tmp/asp-playground-secrets /tmp/asp-playground-run-id

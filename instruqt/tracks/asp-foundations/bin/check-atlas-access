@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 source /opt/asp-playground/instruqt/tracks/asp-foundations/bin/load-secrets
-docker run --rm --network host -e ATLAS_URI="$ATLAS_URI" mongo:8.0 \
-  mongosh "$ATLAS_URI" --quiet --eval 'db.adminCommand({ ping: 1 }).ok === 1 || quit(1)'
+mongosh "$ATLAS_URI" --quiet --eval 'db.adminCommand({ ping: 1 }).ok === 1 || quit(1)'
 printf 'Atlas test cluster is reachable.\n'

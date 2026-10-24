@@ -72,7 +72,7 @@ primera ventana.
 En el workspace ASP:
 
 ```javascript
-load("[local-repository]/projects/02-taco-tracking/processor.js")
+load("projects/02-taco-tracking/processor.js")
 sp.listStreamProcessors()
 sp.labTacoTracking.start()
 sp.labTacoTracking.stats()

@@ -39,7 +39,7 @@ confirma que está activa con `atlas auth whoami`. Si la sesión ha caducado,
 ejecuta de nuevo `atlas auth login`.
 
 ```bash
-cd [local-repository]
+cd "$(git rev-parse --show-toplevel)"
 source .env
 atlas auth whoami
 mongosh "$ATLAS_URI"
@@ -97,7 +97,7 @@ Si alguno no existe, continua con el siguiente comando.
 En la sesion del workspace ASP:
 
 ```javascript
-load("[local-repository]/projects/08-parallelism/processor-change-stream.js")
+load("projects/08-parallelism/processor-change-stream.js")
 
 sp.listStreamProcessors()
 sp.labParallelismSerial.start()
@@ -121,7 +121,7 @@ los processors para que ASP cargue el pipeline nuevo.
 En la sesion conectada al cluster Atlas, ejecuta:
 
 ```javascript
-load("[local-repository]/scripts/08-seed-parallelism.js")
+load("scripts/08-seed-parallelism.js")
 ```
 
 El seeder inserta 100 documentos con cuatro entidades y despues actualiza el
@@ -260,19 +260,19 @@ db.parallelism_parallel_dlq.deleteMany({})
 ```javascript
 SEED_EVENT_COUNT = 100
 SEED_RUN_ID = "run-100"
-load("[local-repository]/scripts/08-seed-parallelism.js")
+load("scripts/08-seed-parallelism.js")
 ```
 
 ```javascript
 SEED_EVENT_COUNT = 1000
 SEED_RUN_ID = "run-1000"
-load("[local-repository]/scripts/08-seed-parallelism.js")
+load("scripts/08-seed-parallelism.js")
 ```
 
 ```javascript
 SEED_EVENT_COUNT = 5000
 SEED_RUN_ID = "run-5000"
-load("[local-repository]/scripts/08-seed-parallelism.js")
+load("scripts/08-seed-parallelism.js")
 ```
 
 Cada lote genera además cuatro actualizaciones, así que los cambios esperados

@@ -25,5 +25,4 @@ if (serial < 104 || parallel < 104 || serialDlq !== 0 || parallelDlq !== 0) {
 printjson({ serial, parallel, serialDlq, parallelDlq });
 print('PASS: both processors completed the controlled run with no DLQ records.');"
 
-docker run --rm --network host -e ATLAS_URI="$ATLAS_URI" mongo:8.0 \
-  mongosh "$ATLAS_URI" --quiet --eval "$eval_code"
+mongosh "$ATLAS_URI" --quiet --eval "$eval_code"

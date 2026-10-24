@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "$EUID" -ne 0 ]]; then
+  echo "Run as root only on a fresh disposable Instruqt image builder." >&2
+  exit 1
+fi
+source_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+workspace_root=/opt/asp-playground
+if [[ -e "$workspace_root" ]]; then
+  echo "Refusing to replace existing workspace: $workspace_root. Use a fresh image builder." >&2
+  exit 1
+fi
+. /etc/os-release
+if [[ "$ID" != ubuntu || ( "$VERSION_CODENAME" != jammy && "$VERSION_CODENAME" != noble ) ]]; then
+  echo "The image builder must use Ubuntu 22.04 or 24.04." >&2
+  exit 1
+fi
+
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq jq curl ca-certificates gnupg
+if ! command -v atlas >/dev/null 2>&1 || ! command -v mongosh >/dev/null 2>&1; then
+  curl -fsSL https://pgp.mongodb.com/server-8.0.asc | \
+    gpg --dearmor --yes -o /usr/share/keyrings/mongodb-server-8.0.gpg
+  printf 'deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.com/apt/ubuntu %s/mongodb-enterprise/8.0 multiverse\n' "$VERSION_CODENAME" \
+    > /etc/apt/sources.list.d/mongodb-enterprise-8.0.list
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq mongodb-atlas-cli mongodb-mongosh
+fi
+mkdir -p "$workspace_root/instruqt/tracks/asp-foundations"
+cp -R "$source_root/tracks/asp-foundations/bin" "$workspace_root/instruqt/tracks/asp-foundations/"
+chmod 755 "$workspace_root/instruqt/tracks/asp-foundations/bin/"*
+mkdir -p "$workspace_root/projects" "$workspace_root/scripts"
+for project in 01-fast-start 02-taco-tracking; do
+  mkdir -p "$workspace_root/projects/$project"
+  cp "$source_root/projects/$project/processor.js" "$workspace_root/projects/$project/"
+done
+mkdir -p "$workspace_root/projects/08-parallelism"
+cp "$source_root/projects/08-parallelism/processor-change-stream.js" "$workspace_root/projects/08-parallelism/"
+cp "$source_root/scripts/08-seed-parallelism.js" "$workspace_root/scripts/"
+atlas --version
+mongosh --version
+jq --version
+printf 'Image prepared. Do not log into Atlas before saving.\n'

@@ -30,7 +30,7 @@ mongosh "$ATLAS_URI"
 ## Run the Lab
 
 ```javascript
-load('[local-repository]/projects/05-http-enrichment/processor.js')
+load("projects/05-http-enrichment/processor.js")
 sp.labHttpEnrichment.start()
 sp.labHttpEnrichment.stats()
 ```

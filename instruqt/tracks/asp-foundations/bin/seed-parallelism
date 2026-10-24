@@ -14,10 +14,7 @@ if [[ ! "$INSTRUQT_PARTICIPANT_ID" =~ ^[A-Za-z0-9-]+$ ]]; then
   echo "Unexpected characters in the Instruqt participant ID." >&2
   exit 2
 fi
-eval_code="SEED_RUN_ID='${run_id}'; SEED_EVENT_COUNT=${event_count}; load('/workspace/scripts/08-seed-parallelism.js')"
+eval_code="SEED_RUN_ID='${run_id}'; SEED_EVENT_COUNT=${event_count}; load('/opt/asp-playground/scripts/08-seed-parallelism.js')"
 printf '%s\n' "$run_id" > /tmp/asp-playground-run-id
-docker run --rm --network host \
-  -e ATLAS_URI="$ATLAS_URI" \
-  --volume /opt/asp-playground:/workspace:ro \
-  mongo:8.0 mongosh "$ATLAS_URI" --quiet --eval "$eval_code"
+mongosh "$ATLAS_URI" --quiet --eval "$eval_code"
 printf 'Seeded run_id=%s with event_count=%s.\n' "$run_id" "$event_count"

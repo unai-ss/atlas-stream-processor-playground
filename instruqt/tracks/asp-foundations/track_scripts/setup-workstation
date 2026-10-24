@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
+  sleep 1
+done
+
+for tool in atlas mongosh jq; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "Missing image dependency: $tool. Rebuild the Atlas workstation image." >&2
+    exit 1
+  fi
+done
+
+for runtime_file in \
+  instruqt/tracks/asp-foundations/bin/asp-shell \
+  instruqt/tracks/asp-foundations/bin/atlas-shell \
+  instruqt/tracks/asp-foundations/bin/check-atlas-access \
+  projects/01-fast-start/processor.js \
+  projects/02-taco-tracking/processor.js \
+  projects/08-parallelism/processor-change-stream.js \
+  scripts/08-seed-parallelism.js; do
+  if [[ ! -r "/opt/asp-playground/$runtime_file" ]]; then
+    echo "Missing image file: $runtime_file. Rebuild the Atlas workstation image." >&2
+    exit 1
+  fi
+done
+
+printf 'Atlas workstation ready; no startup downloads or Docker required.\n'

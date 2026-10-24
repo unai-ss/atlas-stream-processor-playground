@@ -1,6 +1,6 @@
 # Lab 08: ETL parallelism
 
-**Source:** [`projects/08-parallelism`](../../../../projects/08-parallelism/)
+**Source:** [Processor snapshot](../../../projects/08-parallelism/processor-change-stream.js)
 
 ## Learner outcome
 

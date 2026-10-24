@@ -104,7 +104,7 @@ The ASP workspace uses a separate connection through its hostname.
 In `mongosh` connected to the ASP workspace:
 
 ```javascript
-load("[local-repository]/projects/07-metrics-observability/processor.js")
+load("projects/07-metrics-observability/processor.js")
 sp.listStreamProcessors()
 sp.labMetricsObservability.start()
 sp.labMetricsObservability.stats()

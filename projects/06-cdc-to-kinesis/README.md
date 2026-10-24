@@ -21,7 +21,7 @@ session with `atlas auth whoami`. If the session has expired, run
 3. Insert documents into `playground.device_events` with `device_id`, `timestamp`, and `obs.watts` / `obs.temp`.
 
 To insert documents into the Atlas cluster, open `mongosh` using the URI that
-already contains the credentials for `stream[redacted]`:
+already contains the credentials for `streamUser`:
 
 ```bash
 mongosh "$ATLAS_URI"
@@ -33,7 +33,7 @@ outside this repository, and never store credentials in files.
 ## Run the Lab
 
 ```javascript
-load('[local-repository]/projects/06-cdc-to-kinesis/processor.js')
+load("projects/06-cdc-to-kinesis/processor.js")
 sp.labCdcKinesis.start()
 sp.labCdcKinesis.stats()
 ```

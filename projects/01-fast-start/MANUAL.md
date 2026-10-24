@@ -74,7 +74,7 @@ Observa la forma de los documentos y termina la ejecución temporal con `Ctrl-C`
 ## Paso 2: cargar el pipeline
 
 ```javascript
-load("[local-repository]/projects/01-fast-start/processor.js")
+load("projects/01-fast-start/processor.js")
 sp.listStreamProcessors()
 ```
 

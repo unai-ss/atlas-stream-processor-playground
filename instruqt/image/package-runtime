@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ "$#" -ne 1 || "$1" != /* ]]; then
+  echo "Usage: bash image/package-runtime /absolute/path/to/new-runtime.tar.gz" >&2
+  exit 2
+fi
+if [[ -e "$1" ]]; then
+  echo "Refusing to overwrite existing archive: $1" >&2
+  exit 1
+fi
+
+COPYFILE_DISABLE=1 tar -czf "$1" -C "$source_root" \
+  image/prepare-host \
+  tracks/asp-foundations/bin \
+  projects/01-fast-start/processor.js \
+  projects/02-taco-tracking/processor.js \
+  projects/08-parallelism/processor-change-stream.js \
+  scripts/08-seed-parallelism.js
+printf 'Created runtime bundle: %s\n' "$1"

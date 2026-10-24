@@ -101,14 +101,14 @@ Change Stream mode adds `run_id`, `entity_id`, `sequence`, `partition_key`, and
 In a project terminal, load the local configuration and verify Atlas CLI access:
 
 ```bash
-cd [local-repository]
+cd ~/Documents/atlas-stream-processor-playground
 source .env
 atlas whoami
 ```
 
-`[redacted]` is the Atlas CLI account. `stream[redacted]` is the database user
+`xxxxxxxxxxxxx` is the Atlas CLI account. `streamUser` is the database user
 whose password is already included in `ATLAS_URI`; these are separate
-identities. The `stream[redacted]` user requires at least `readWrite` access to
+identities. The `streamUser` user requires at least `readWrite` access to
 `playground`, and `atlas_lab` must be in the `READY` state in the ASP workspace.
 
 To insert and query documents in the Atlas cluster, connect with:
@@ -152,7 +152,7 @@ sp.labParallelismWorkers.drop()
 Load the processor from the absolute path:
 
 ```javascript
-load("[local-repository]/projects/08-parallelism/processor.js")
+load("projects/08-parallelism/processor.js")
 ```
 
 Confirm that they exist, then start them:
@@ -271,7 +271,7 @@ sp.labParallelismSerial.stop()
 sp.labParallelismWorkers.stop()
 sp.labParallelismSerial.drop()
 sp.labParallelismWorkers.drop()
-load("[local-repository]/projects/08-parallelism/processor-change-stream.js")
+load("projects/08-parallelism/processor-change-stream.js")
 sp.labParallelismSerial.start()
 sp.labParallelismWorkers.start()
 sp.labParallelismSerial.stats()
@@ -300,7 +300,7 @@ db.createCollection("parallelism_parallel_dlq")
 In another `mongosh` session connected to the Atlas cluster, run:
 
 ```javascript
-load("[local-repository]/scripts/08-seed-parallelism.js")
+load("scripts/08-seed-parallelism.js")
 ```
 
 The seeder inserts 100 events for `run-001`, then updates one event for each

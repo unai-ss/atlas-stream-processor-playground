@@ -29,7 +29,7 @@ mongosh "$ATLAS_URI"
 ## Run the Lab
 
 ```javascript
-load('[local-repository]/projects/04-late-data-join/processor.js')
+load("projects/04-late-data-join/processor.js")
 sp.sensorJoins.start()
 sp.sensorDLQUpdater.start()
 sp.sensorJoins.stats()
