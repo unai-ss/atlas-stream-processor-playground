@@ -12,7 +12,7 @@ for tool in atlas mongosh jq curl tar; do
   fi
 done
 
-source_revision="2506cda16dc4fd3e8b198dbe1f70337a9895753c"
+source_revision="716d4a75cf0b64e35481ffa1f730f1f71e7c81e1"
 archive_url="https://codeload.github.com/unai-ss/atlas-stream-processor-playground/tar.gz/${source_revision}"
 download_dir="$(mktemp -d)"
 trap 'rm -rf "$download_dir"' EXIT
