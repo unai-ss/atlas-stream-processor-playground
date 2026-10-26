@@ -5,12 +5,51 @@ until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
   sleep 1
 done
 
-for tool in atlas mongosh jq; do
+for tool in atlas mongosh jq curl tar; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "Missing image dependency: $tool. Rebuild the Atlas workstation image." >&2
     exit 1
   fi
 done
+
+source_revision="2506cda16dc4fd3e8b198dbe1f70337a9895753c"
+archive_url="https://codeload.github.com/unai-ss/atlas-stream-processor-playground/tar.gz/${source_revision}"
+download_dir="$(mktemp -d)"
+trap 'rm -rf "$download_dir"' EXIT
+archive_path="$download_dir/source.tar.gz"
+source_root="$download_dir/source"
+mkdir -p "$source_root"
+curl --fail --silent --show-error --location "$archive_url" --output "$archive_path"
+tar -xzf "$archive_path" --strip-components=1 -C "$source_root"
+
+for runtime_file in \
+  instruqt/tracks/asp-foundations/bin/asp-shell \
+  instruqt/tracks/asp-foundations/bin/atlas-shell \
+  instruqt/tracks/asp-foundations/bin/check-atlas-access \
+  projects/01-fast-start/processor.js \
+  projects/02-taco-tracking/processor.js \
+  projects/08-parallelism/processor-change-stream.js \
+  scripts/08-seed-parallelism.js; do
+  if [[ ! -r "$source_root/$runtime_file" ]]; then
+    echo "Missing runtime file in public source revision $source_revision: $runtime_file" >&2
+    exit 1
+  fi
+done
+
+mkdir -p /opt/asp-playground/instruqt/tracks/asp-foundations
+cp -R "$source_root/instruqt/tracks/asp-foundations/bin" \
+  /opt/asp-playground/instruqt/tracks/asp-foundations/
+mkdir -p /opt/asp-playground/projects /opt/asp-playground/scripts
+for project in 01-fast-start 02-taco-tracking; do
+  mkdir -p "/opt/asp-playground/projects/$project"
+  cp "$source_root/projects/$project/processor.js" \
+    "/opt/asp-playground/projects/$project/"
+done
+mkdir -p /opt/asp-playground/projects/08-parallelism
+cp "$source_root/projects/08-parallelism/processor-change-stream.js" \
+  /opt/asp-playground/projects/08-parallelism/
+cp "$source_root/scripts/08-seed-parallelism.js" /opt/asp-playground/scripts/
+chmod 755 /opt/asp-playground/instruqt/tracks/asp-foundations/bin/*
 
 for runtime_file in \
   instruqt/tracks/asp-foundations/bin/asp-shell \
@@ -21,9 +60,9 @@ for runtime_file in \
   projects/08-parallelism/processor-change-stream.js \
   scripts/08-seed-parallelism.js; do
   if [[ ! -r "/opt/asp-playground/$runtime_file" ]]; then
-    echo "Missing image file: $runtime_file. Rebuild the Atlas workstation image." >&2
+    echo "Failed to install runtime file: $runtime_file" >&2
     exit 1
   fi
 done
 
-printf 'Atlas workstation ready; no startup downloads or Docker required.\n'
+printf 'Atlas workstation ready; runtime files downloaded from public revision %s. No Docker required.\n' "$source_revision"

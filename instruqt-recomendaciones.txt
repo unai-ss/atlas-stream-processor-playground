@@ -16,10 +16,14 @@ Desde la raiz del repositorio ejecutar:
   bash instruqt/image/package-runtime /ruta/absoluta/fuera/del/repo/asp-runtime-v1.tar.gz
   tar -tzf /ruta/absoluta/fuera/del/repo/asp-runtime-v1.tar.gz
 
-Transferir el paquete al builder por el mecanismo privado aprobado y ejecutar
-image/prepare-host como root solo en ese builder desechable. Revisar los
+Transferir el paquete de preparacion al builder por el mecanismo privado
+aprobado y ejecutar image/prepare-host como root solo en ese builder desechable. Revisar los
 requisitos de guest environment y machine identity de Instruqt antes de guardar
 la imagen.
+
+El setup de la track descarga por HTTPS los archivos runtime permitidos desde el
+commit publico fijado en setup-workstation. Actualizar ese SHA cuando se publique
+una revision revisada del runtime.
 
 3. Publicar y probar
 Desde instruqt/tracks/asp-foundations:
@@ -37,6 +41,7 @@ completo.
 Mantener las URIs Atlas en el archivo temporal por sandbox. No copiar .env,
 secretos, perfiles Atlas ni datos de alumnos al repositorio o a la imagen.
 La track no necesita Docker, Kafka, certificados TLS de sandbox ni ingress.
+El sandbox necesita salida HTTPS a GitHub para descargar el runtime publico.
 Los recursos Atlas no se borran automaticamente al terminar el sandbox.
 
 Documentacion completa: instruqt/image/README.md.

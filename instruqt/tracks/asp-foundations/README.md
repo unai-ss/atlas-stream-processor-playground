@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. Runtime processor and seed-script snapshots are baked into a versioned Host image. The workstation provides Atlas CLI, `mongosh`, and `jq`; the track does not use Docker, a Kafka broker, or inbound network access.
+Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. The workstation image provides Atlas CLI, `mongosh`, and `jq`; at startup the track downloads pinned runtime source files from the public GitHub repository. The track does not use Docker, a Kafka broker, or inbound network access.
 
 ## Proposed learner flow
 
@@ -30,7 +30,7 @@ Each lab should specify prerequisites, learner steps, deterministic success crit
 
 ## Publication status
 
-Draft implementation for the `mongodb-ts-dev` Instruqt organization. Lab 00 is responsible for learner-driven Atlas provisioning with Atlas CLI; the Host image supplies the CLI tools and runtime source but does not create Atlas resources. A real end-to-end sandbox run requires the saved Host image and a dedicated non-production Atlas project and ASP workspace per learner. Do not publish for concurrent use until resource isolation and cleanup have been verified.
+Draft implementation for the `mongodb-ts-dev` Instruqt organization. Lab 00 is responsible for learner-driven Atlas provisioning with Atlas CLI; the Host image supplies CLI tools and the startup script fetches the pinned runtime source, but neither creates Atlas resources. A real end-to-end sandbox run requires the saved Host image, outbound HTTPS to GitHub, and a dedicated non-production Atlas project and ASP workspace per learner. Do not publish for concurrent use until resource isolation and cleanup have been verified.
 
 ## Timing and rollout
 

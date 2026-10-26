@@ -2,7 +2,7 @@
 
 Build target: `mongodb-ts-dev/asp-foundations-cli-v1`. This image name is configured in the track but must be created and saved before publishing.
 
-The workstation image supplies Atlas CLI, `mongosh`, `jq`, and the reviewed processor files. It does not install Docker, run Kafka, expose inbound ports, or contain Atlas credentials.
+The workstation image supplies Atlas CLI, `mongosh`, `jq`, `curl`, and `tar`. At track startup, `setup-workstation` downloads only the required processor, helper, and seed files from a pinned commit in the public source repository. The image does not install Docker, run Kafka, expose inbound ports, or contain Atlas credentials.
 
 ## Build the runtime bundle
 
@@ -14,7 +14,7 @@ bash instruqt/image/package-runtime /absolute/path/outside/the/repo/asp-runtime-
 tar -tzf /absolute/path/outside/the/repo/asp-runtime-v1.tar.gz
 ```
 
-The archive contains only the workstation preparation script, track helpers, processors for Labs 01, 02, and 08, and the Lab 08 seed script. It excludes Git history, local credentials, and unrelated project files.
+The archive contains only the workstation preparation script. Runtime files are fetched by the track setup script from the pinned source revision, not baked into the image.
 
 ## Build in Instruqt
 
@@ -30,15 +30,18 @@ bash /tmp/asp-image-build/image/prepare-host
 atlas --version
 mongosh --version
 jq --version
-du -sh /opt/asp-playground
+curl --version
+tar --version
 ```
 
-The script installs the command-line tools and copies the reviewed runtime files. It refuses to replace an existing workspace and does not authenticate to Atlas.
+The script installs the command-line tools only. It does not authenticate to Atlas or download project source during image creation.
 
 5. Remove the temporary bundle/build directory and transfer credentials. Confirm there are no Atlas profiles, sandbox secret files, or learner data in the image. Follow [Instruqt's image preparation requirements](https://docs.instruqt.com/sandboxes/hosts/create-a-custom-vm-image.md), including resetting machine identity when required. Never save a used learner sandbox as the base image.
 6. Save the image as `mongodb-ts-dev/asp-foundations-cli-v1` and verify its exact reference matches `tracks/asp-foundations/config.yml`.
 
-No public hostname, TLS certificate, or external ingress is required. The workstation initiates outbound connections to Atlas.
+No public hostname, TLS certificate, or external ingress is required. The workstation initiates outbound HTTPS connections to GitHub to retrieve the pinned runtime source and to Atlas for learner operations. No GitHub token is needed because the source repository is public.
+
+When publishing runtime changes, update `source_revision` in `track_scripts/setup-workstation` to the reviewed public commit SHA and rerun the runtime tests.
 
 ## Publish and test
 

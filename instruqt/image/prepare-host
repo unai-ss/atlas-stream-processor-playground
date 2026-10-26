@@ -19,6 +19,7 @@ fi
 
 apt-get update -qq
 DEBIAN_FRONTEND=noninteractive apt-get install -y -qq jq curl ca-certificates gnupg
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tar
 if ! command -v atlas >/dev/null 2>&1 || ! command -v mongosh >/dev/null 2>&1; then
   curl -fsSL https://pgp.mongodb.com/server-8.0.asc | \
     gpg --dearmor --yes -o /usr/share/keyrings/mongodb-server-8.0.gpg
@@ -41,4 +42,6 @@ cp "$source_root/scripts/08-seed-parallelism.js" "$workspace_root/scripts/"
 atlas --version
 mongosh --version
 jq --version
-printf 'Image prepared. Do not log into Atlas before saving.\n'
+curl --version | head -n 1
+tar --version | head -n 1
+printf 'Atlas workstation tools prepared. Runtime source downloads at track startup.\n'

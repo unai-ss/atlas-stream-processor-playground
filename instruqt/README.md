@@ -29,9 +29,9 @@ When working from a clone of the Instruqt repository, run track commands from `t
 The content here is a draft and must be validated in the team's Instruqt organization before publishing. In particular:
 
 - Confirm the Instruqt CLI and track schema version used by the team.
-- Build and save the versioned team Host image before publishing this track. Follow [the image workflow](image/README.md). No GitHub token or runtime repository access is required.
+- Build and save the versioned team Host image before publishing this track. Follow [the image workflow](image/README.md). The public source download requires outbound HTTPS to GitHub but no GitHub token.
 - Have each learner provision Atlas resources from the sandbox with Atlas CLI; do not deliver shared Atlas credentials through Instruqt team secrets.
-- The VM setup checks preinstalled tools and runtime files. It does not clone repositories or install packages. Rebuild the image when runtime source changes.
+- The VM setup downloads runtime files from a pinned public GitHub commit. It does not clone the repository or install packages. Update the pinned commit when runtime source changes.
 - Validate setup, challenge, and cleanup scripts with a full sandbox run.
 
 Do not copy `.env`, Atlas URIs, credentials, readiness evidence, or production data into this directory. Keep learner-facing instructions concise and make each exercise independently verifiable and safe to clean up.
