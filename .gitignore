@@ -1,4 +1,5 @@
 .env
+/secret
 readiness-evidence/
 *.png
 !instruqt/tracks/asp-foundations/assets/track-icon.png
