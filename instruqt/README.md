@@ -29,7 +29,7 @@ When working from a clone of the Instruqt repository, run track commands from `t
 The content here is a draft and must be validated in the team's Instruqt organization before publishing. In particular:
 
 - Confirm the Instruqt CLI and track schema version used by the team.
-- The track uses Instruqt's stock `ubuntu-22-04` VM preset. Its setup script installs Atlas CLI and `mongosh`, then downloads runtime files from a pinned public GitHub commit. No GitHub token is required.
+- The track uses the public `ubuntu-os-cloud/ubuntu-2204-lts` GCP image. Its setup script installs Atlas CLI and `mongosh`, then downloads runtime files from a pinned public GitHub commit. No GitHub token is required.
 - Have each learner provision Atlas resources from the sandbox with Atlas CLI; do not deliver shared Atlas credentials through Instruqt team secrets.
 - The VM setup installs packages and downloads runtime files from a pinned public GitHub commit. Update the pinned commit when runtime source changes.
 - Validate setup, challenge, and cleanup scripts with a full sandbox run.

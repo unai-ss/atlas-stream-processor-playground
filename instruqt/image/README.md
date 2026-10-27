@@ -1,6 +1,6 @@
 # Ubuntu Workstation Setup
 
-The track uses Instruqt's stock `ubuntu-22-04` VM preset in `config.yml`; no custom Host image is required.
+The track uses Google's public GCP image `ubuntu-os-cloud/ubuntu-2204-lts` in `config.yml`; no custom Host image is required. This is the fully qualified image reference supported by Instruqt for Ubuntu 22.04.
 
 At sandbox startup, `setup-workstation` installs Atlas CLI, `mongosh`, `jq`, `curl`, and `tar`, then downloads only the runtime files required by Labs 01, 02, and 08 from the public GitHub repository. The source revision is pinned by full commit SHA in the setup script. No GitHub token is needed.
 

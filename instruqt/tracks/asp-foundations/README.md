@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. The `ubuntu-22-04` workstation setup installs Atlas CLI, `mongosh`, and `jq`, then downloads pinned runtime source files from the public GitHub repository. The track does not use Docker, a Kafka broker, or inbound network access.
+Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. The `ubuntu-os-cloud/ubuntu-2204-lts` workstation setup installs Atlas CLI, `mongosh`, and `jq`, then downloads pinned runtime source files from the public GitHub repository. The track does not use Docker, a Kafka broker, or inbound network access.
 
 ## Proposed learner flow
 
@@ -20,7 +20,7 @@ Detailed adaptation briefs are in [`labs/`](labs/).
 - Have each learner use Atlas CLI from the sandbox VM to provision resources in a dedicated, non-production Atlas project during Lab 00.
 - Keep Atlas connection URIs in a permission-restricted, per-sandbox file; do not configure them as shared Instruqt team secrets.
 - Use a dedicated ASP workspace per learner.
-- Use Instruqt's stock `ubuntu-22-04` VM preset; packages and runtime files are installed at sandbox startup.
+- Use the public `ubuntu-os-cloud/ubuntu-2204-lts` VM image; packages and runtime files are installed at sandbox startup.
 - Set resource quotas, time limits, cleanup ownership, and recovery behavior for interrupted runs.
 - Do not enable external ingress or TLS certificate provisioning; the learner tools make outbound connections to Atlas only.
 

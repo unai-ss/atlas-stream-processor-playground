@@ -1,7 +1,7 @@
 RECOMENDACIONES PARA PUBLICAR EL TRACK DE INSTRUQT
 
 Track: asp-foundations
-Imagen preset: ubuntu-22-04
+Imagen publica: ubuntu-os-cloud/ubuntu-2204-lts
 Host: workstation
 
 1. Validar el runtime
