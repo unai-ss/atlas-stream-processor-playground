@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. The existing `mongodb-ts-dev/instruqt-mongodb-1024` workstation image must provide Atlas CLI, `mongosh`, `jq`, `curl`, and `tar`; startup downloads pinned runtime source files from the public GitHub repository. The track does not use Docker, a Kafka broker, or inbound network access.
+Prepare a hands-on Instruqt track for Atlas Stream Processing using Labs 00, 01, 02, and 08. It uses the 1024 MB MongoDB container image from Artifact Registry; startup verifies CLI tools and downloads pinned runtime source files from the public GitHub repository. The track does not use Docker-in-Docker, a Kafka broker, or inbound network access.
 
 ## Proposed learner flow
 
@@ -20,7 +20,7 @@ Detailed adaptation briefs are in [`labs/`](labs/).
 - Have each learner use Atlas CLI from the sandbox VM to provision resources in a dedicated, non-production Atlas project during Lab 00.
 - Keep Atlas connection URIs in a permission-restricted, per-sandbox file; do not configure them as shared Instruqt team secrets.
 - Use a dedicated ASP workspace per learner.
-- Use the existing `mongodb-ts-dev/instruqt-mongodb-1024` Host image and confirm it contains all required tools before pushing the track. Runtime source files are downloaded at startup.
+- Use the existing Artifact Registry container image and confirm it contains `atlas`, `mongosh`, `jq`, `curl`, and `tar` before pushing the track. Runtime source files are downloaded at startup.
 - Set resource quotas, time limits, cleanup ownership, and recovery behavior for interrupted runs.
 - Do not enable external ingress or TLS certificate provisioning; the sandbox only needs outbound HTTPS to GitHub and Atlas.
 
@@ -30,7 +30,7 @@ Each lab should specify prerequisites, learner steps, deterministic success crit
 
 ## Publication status
 
-Draft implementation for the `mongodb-ts-dev` Instruqt organization. Lab 00 is responsible for learner-driven Atlas provisioning with Atlas CLI; the Host image supplies tools and the startup script fetches pinned runtime source but does not create Atlas resources. A real end-to-end sandbox run requires the saved Host image, outbound HTTPS to GitHub and Atlas, and a dedicated non-production Atlas project and ASP workspace per learner. Do not publish for concurrent use until resource isolation and cleanup have been verified.
+Draft implementation for the `mongodb-ts-dev` Instruqt organization. Lab 00 is responsible for learner-driven Atlas provisioning with Atlas CLI; the container supplies tools and the startup script fetches pinned runtime source but does not create Atlas resources. A real end-to-end sandbox run requires Instruqt pull access to the image, outbound HTTPS to GitHub and Atlas, and a dedicated non-production Atlas project and ASP workspace per learner. Do not publish for concurrent use until resource isolation and cleanup have been verified.
 
 ## Timing and rollout
 

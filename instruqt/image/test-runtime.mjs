@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const setup = readFileSync(path.join(sourceRoot, 'tracks/asp-foundations/track_scripts/setup-workstation'), 'utf8');
-const imagePreparation = readFileSync(path.join(sourceRoot, 'image/prepare-host'), 'utf8');
+const trackConfig = readFileSync(path.join(sourceRoot, 'tracks/asp-foundations/config.yml'), 'utf8');
 const runtimeFiles = [
   'instruqt/tracks/asp-foundations/bin/asp-shell',
   'instruqt/tracks/asp-foundations/bin/atlas-shell',
@@ -58,22 +58,21 @@ curl() { cp "$GITHUB_ARCHIVE_FIXTURE" "$archive_path"; }
   }
 }
 
-test('custom-image setup downloads the pinned public source without installing packages, Docker, or credentials', () => {
+test('Instruqt uses the provided 1024 MB MongoDB container image', () => {
+  assert.match(trackConfig, /containers:/);
+  assert.match(trackConfig, /name: workstation/);
+  assert.match(trackConfig, /image: europe-west1-docker\.pkg\.dev\/instruqt-mongodb\/instruqt-images\/mongodb:1\.0\.22/);
+  assert.match(trackConfig, /memory: 1024/);
+  assert.doesNotMatch(trackConfig, /virtualmachines:/);
+});
+
+test('container setup downloads the pinned public source without package installation, Docker, or credentials', () => {
   const { result } = runSetup();
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /runtime files downloaded from public revision/);
   assert.match(setup, /https:\/\/codeload\.github\.com\/unai-ss\/atlas-stream-processor-playground\/tar\.gz/);
   assert.match(setup, /source_revision="[a-f0-9]{40}"/);
   assert.doesNotMatch(setup, /apt-get|mongodb-atlas-cli|mongodb-mongosh|git clone|docker run|docker pull|INSTRUQT_GITHUB_READ_TOKEN/);
-});
-
-test('Host image preparation installs required tools once without Docker or Atlas credentials', () => {
-  assert.match(imagePreparation, /apt-get install -y -qq ca-certificates curl gnupg jq tar/);
-  assert.match(imagePreparation, /mongodb-atlas-cli mongodb-mongosh/);
-  assert.match(imagePreparation, /Run this script as root/);
-  assert.doesNotMatch(imagePreparation, /docker pull|docker run|atlas auth login/);
-  const syntax = spawnSync('bash', ['-n', path.join(sourceRoot, 'image/prepare-host')], { encoding: 'utf8' });
-  assert.equal(syntax.status, 0, syntax.stderr);
 });
 
 test('missing runtime file fails with rebuild instructions', () => {

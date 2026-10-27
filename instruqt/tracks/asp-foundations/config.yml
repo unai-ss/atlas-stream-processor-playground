@@ -1,6 +1,5 @@
 version: "3"
-virtualmachines:
+containers:
   - name: workstation
-    image: mongodb-ts-dev/instruqt-mongodb-1024
-    shell: /bin/bash
-    machine_type: n1-standard-2
+    image: europe-west1-docker.pkg.dev/instruqt-mongodb/instruqt-images/mongodb:1.0.22
+    memory: 1024

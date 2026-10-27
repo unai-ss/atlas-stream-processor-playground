@@ -29,9 +29,9 @@ When working from a clone of the Instruqt repository, run track commands from `t
 The content here is a draft and must be validated in the team's Instruqt organization before publishing. In particular:
 
 - Confirm the Instruqt CLI and track schema version used by the team.
-- The track uses the existing `mongodb-ts-dev/instruqt-mongodb-1024` Host image. Its setup script verifies the required CLI tools and downloads runtime files from a pinned public GitHub commit. No GitHub token is required. See [the image guide](image/README.md) if a tool is missing.
+- The track uses the `europe-west1-docker.pkg.dev/instruqt-mongodb/instruqt-images/mongodb:1.0.22` container image with 1024 MB memory. Its setup script verifies the required CLI tools and downloads runtime files from a pinned public GitHub commit. No GitHub token is required. See [the image guide](image/README.md) for tool and registry requirements.
 - Have each learner provision Atlas resources from the sandbox with Atlas CLI; do not deliver shared Atlas credentials through Instruqt team secrets.
-- The Host image contains Atlas CLI, `mongosh`, and `jq`; VM setup checks these tools and downloads runtime files from a pinned public GitHub commit. Update the pinned commit when runtime source changes.
+- The container must include Atlas CLI, `mongosh`, `jq`, `curl`, and `tar`; setup checks these tools and downloads runtime files from a pinned public GitHub commit. Update the pinned commit when runtime source changes.
 - Validate setup, challenge, and cleanup scripts with a full sandbox run.
 
 Do not copy `.env`, Atlas URIs, credentials, readiness evidence, or production data into this directory. Keep learner-facing instructions concise and make each exercise independently verifiable and safe to clean up.

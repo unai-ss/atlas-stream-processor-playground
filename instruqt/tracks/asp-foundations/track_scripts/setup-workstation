@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
-  sleep 1
-done
-
 for tool in atlas mongosh jq curl tar; do
   if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "Missing Host image dependency: $tool. Build the Atlas workstation image." >&2
+    echo "Missing container image dependency: $tool. Add it to the MongoDB container image." >&2
     exit 1
   fi
 done

@@ -1,26 +1,23 @@
-# Atlas Workstation Host Image
+# MongoDB Container Workstation
 
-The track uses the existing Instruqt Host image `mongodb-ts-dev/instruqt-mongodb-1024`, configured in `tracks/asp-foundations/config.yml`. The startup hook verifies that it includes `atlas`, `mongosh`, `jq`, `curl`, and `tar`, then downloads the pinned runtime source. If a tool is missing, add it to this image rather than installing packages on every sandbox start.
+The track uses the existing 1024 MB container image in `config.yml`:
 
-## Build the image
-
-If the existing image is missing a required tool, create a replacement in Instruqt under team `mongodb-ts-dev` > **Settings > Host images > Create image**. Use `instruqt-ubuntu-22-04-base` as the base; it includes the Instruqt agent/guest setup.
-
-1. Name the replacement `asp-foundations-cli-v1`.
-2. In the disposable image builder terminal, fetch the preparation script from a reviewed commit of this public repository and run it as root:
-
-```bash
-curl --fail --silent --show-error --location \
-	https://raw.githubusercontent.com/unai-ss/atlas-stream-processor-playground/main/instruqt/image/prepare-host \
-	--output /tmp/prepare-host
-bash /tmp/prepare-host
+```text
+europe-west1-docker.pkg.dev/instruqt-mongodb/instruqt-images/mongodb:1.0.22
 ```
 
-The script installs Atlas CLI, `mongosh`, `jq`, `curl`, and `tar` on Ubuntu 22.04 or 24.04. It does not authenticate to Atlas, download project source, or start services. Verify tool versions, then point `config.yml` to the replacement image `mongodb-ts-dev/asp-foundations-cli-v1`.
+The image description includes MongoDB, `mongosh`, Python, default tools, and sample data. The startup hook additionally requires `atlas`, `jq`, `curl`, and `tar`; the image description does not confirm that `atlas` is included, so `instruqt track test` must verify it. If a required tool is missing, add it to the container image rather than installing packages during every sandbox start.
 
-4. Do not save Atlas profiles, learner data, credentials, or temporary build files in the image. Follow [Instruqt's image preparation requirements](https://docs.instruqt.com/sandboxes/hosts/create-a-custom-vm-image.md).
+## Artifact Registry access
 
-At track startup, `setup-workstation` checks the preinstalled tools and downloads only the runtime files required by Labs 01, 02, and 08 from a public GitHub archive pinned by full commit SHA. No GitHub token is needed. The sandbox needs outbound HTTPS access to GitHub codeload and Atlas. It does not use Docker, Kafka, inbound ports, or sandbox TLS certificates.
+If the Artifact Registry repository is private, grant Instruqt's service accounts `roles/storage.objectViewer` and `roles/artifactregistry.reader` on the backing storage/repository:
+
+- `instruqt-participants-nodepool@instruqt-prod.iam.gserviceaccount.com`
+- `instruqt-backend@instruqt-prod.iam.gserviceaccount.com`
+
+The image must be built for Linux `amd64`. Instruqt's container host runs the image directly; this track does not use Docker-in-Docker, Kafka, inbound ports, or sandbox TLS certificates.
+
+At startup, `setup-workstation` downloads only the runtime files required by Labs 01, 02, and 08 from a public GitHub archive pinned by full commit SHA. No GitHub token is needed. The sandbox needs outbound HTTPS access to GitHub codeload and Atlas.
 
 When publishing runtime changes, update `source_revision` in `track_scripts/setup-workstation` to a reviewed public commit SHA and rerun the tests.
 

@@ -1,13 +1,14 @@
 RECOMENDACIONES PARA PUBLICAR EL TRACK DE INSTRUQT
 
 Track: asp-foundations
-Host image: mongodb-ts-dev/instruqt-mongodb-1024
+Container: europe-west1-docker.pkg.dev/instruqt-mongodb/instruqt-images/mongodb:1.0.22
+Memoria: 1024 MB
 Host: workstation
 
-1. Comprobar la Host image existente
-Verificar que mongodb-ts-dev/instruqt-mongodb-1024 contiene atlas, mongosh, jq,
-curl y tar. setup-workstation falla con un mensaje claro si falta alguna
-dependencia.
+1. Comprobar el contenedor existente
+Verificar que el Artifact Registry permite el pull desde Instruqt y que la
+imagen contiene atlas, mongosh, jq, curl y tar. setup-workstation falla con un
+mensaje claro si falta alguna dependencia.
 
 2. Validar el runtime
 Desde la raiz del repositorio ejecutar:
@@ -18,9 +19,9 @@ Desde la raiz del repositorio ejecutar:
 La imagen debe preinstalar Atlas CLI, mongosh, jq, curl y tar. El setup de cada
 sandbox verifica las herramientas y descarga por HTTPS solo los archivos
 runtime permitidos desde el commit publico fijado en setup-workstation.
-Actualizar ese SHA cuando se publique una revision revisada del runtime. Si
-falta alguna herramienta, crear una imagen basada en instruqt-ubuntu-22-04-base
-con instruqt/image/prepare-host y cambiar config.yml a la nueva referencia.
+Actualizar ese SHA cuando se publique una revision revisada del runtime. Si el
+Artifact Registry es privado, dar a las cuentas de servicio de Instruqt los
+roles storage.objectViewer y artifactregistry.reader.
 
 3. Publicar y probar
 Desde instruqt/tracks/asp-foundations:
@@ -36,9 +37,8 @@ completo.
 4. Seguridad y operacion
 Mantener las URIs Atlas en el archivo temporal por sandbox. No copiar .env,
 secretos, perfiles Atlas ni datos de alumnos al repositorio o a la imagen.
-La track no necesita Docker, Kafka, certificados TLS de sandbox ni ingress.
-El builder necesita salida HTTPS a los repositorios de paquetes. El sandbox
-necesita salida HTTPS a GitHub y Atlas.
+La track no necesita Docker-in-Docker, Kafka, certificados TLS de sandbox ni
+ingress. El sandbox necesita salida HTTPS a GitHub y Atlas.
 Los recursos Atlas no se borran automaticamente al terminar el sandbox.
 
 Documentacion completa: instruqt/image/README.md.
