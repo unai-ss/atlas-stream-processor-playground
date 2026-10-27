@@ -5,9 +5,22 @@ until [[ -f /opt/instruqt/bootstrap/host-bootstrap-completed ]]; do
   sleep 1
 done
 
+apt-get update -qq
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ca-certificates curl gnupg jq tar
+
+if ! command -v atlas >/dev/null 2>&1 || ! command -v mongosh >/dev/null 2>&1; then
+  mkdir -p /usr/share/keyrings /etc/apt/sources.list.d
+  curl -fsSL https://pgp.mongodb.com/server-8.0.asc | \
+    gpg --dearmor --yes -o /usr/share/keyrings/mongodb-server-8.0.gpg
+  printf 'deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.com/apt/ubuntu jammy/mongodb-enterprise/8.0 multiverse\n' \
+    > /etc/apt/sources.list.d/mongodb-enterprise-8.0.list
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq mongodb-atlas-cli mongodb-mongosh
+fi
+
 for tool in atlas mongosh jq curl tar; do
   if ! command -v "$tool" >/dev/null 2>&1; then
-    echo "Missing image dependency: $tool. Rebuild the Atlas workstation image." >&2
+    echo "Failed to install workstation dependency: $tool." >&2
     exit 1
   fi
 done

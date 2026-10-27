@@ -29,9 +29,9 @@ When working from a clone of the Instruqt repository, run track commands from `t
 The content here is a draft and must be validated in the team's Instruqt organization before publishing. In particular:
 
 - Confirm the Instruqt CLI and track schema version used by the team.
-- Build and save the versioned team Host image before publishing this track. Follow [the image workflow](image/README.md). The public source download requires outbound HTTPS to GitHub but no GitHub token.
+- The track uses Instruqt's stock `ubuntu-22-04` VM preset. Its setup script installs Atlas CLI and `mongosh`, then downloads runtime files from a pinned public GitHub commit. No GitHub token is required.
 - Have each learner provision Atlas resources from the sandbox with Atlas CLI; do not deliver shared Atlas credentials through Instruqt team secrets.
-- The VM setup downloads runtime files from a pinned public GitHub commit. It does not clone the repository or install packages. Update the pinned commit when runtime source changes.
+- The VM setup installs packages and downloads runtime files from a pinned public GitHub commit. Update the pinned commit when runtime source changes.
 - Validate setup, challenge, and cleanup scripts with a full sandbox run.
 
 Do not copy `.env`, Atlas URIs, credentials, readiness evidence, or production data into this directory. Keep learner-facing instructions concise and make each exercise independently verifiable and safe to clean up.
@@ -40,7 +40,7 @@ Do not copy `.env`, Atlas URIs, credentials, readiness evidence, or production d
 
 1. Keep each improvement focused and edit the source in this repository.
 2. Run `instruqt track validate`, `git diff --check`, and `bash -n` for changed shell scripts.
-3. Commit and publish the Instruqt subtree. Build the Host image from that reviewed revision when runtime files change, then update the image name in the track configuration.
+3. Commit and publish the Instruqt subtree. Update the pinned runtime commit in `track_scripts/setup-workstation` when runtime files change.
 4. From `tracks/asp-foundations/`, run `instruqt track push` without `--force`. Use `--force` only after confirming the remote differences belong to this track update.
 5. Run `instruqt track test` to check sandbox startup and lifecycle scripts. This starts a temporary Instruqt sandbox; its Lab 00 test path is simulated and does not create Atlas resources.
 6. Use **Play track** for a learner-flow test. The participant supplies a dedicated Atlas `PROJECT_ID` and creates the Atlas resources in Lab 00.

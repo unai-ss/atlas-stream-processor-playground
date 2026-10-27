@@ -8,7 +8,6 @@ import { spawnSync } from 'node:child_process';
 
 const sourceRoot = fileURLToPath(new URL('../', import.meta.url));
 const setup = readFileSync(path.join(sourceRoot, 'tracks/asp-foundations/track_scripts/setup-workstation'), 'utf8');
-const imagePreparation = readFileSync(path.join(sourceRoot, 'image/prepare-host'), 'utf8');
 const runtimeFiles = [
   'instruqt/tracks/asp-foundations/bin/asp-shell',
   'instruqt/tracks/asp-foundations/bin/atlas-shell',
@@ -37,6 +36,7 @@ function runSetup({ missingFile } = {}) {
     const archived = spawnSync('tar', ['-czf', archive, '-C', root, 'source-tree'], { encoding: 'utf8' });
     assert.equal(archived.status, 0, archived.stderr);
     const stubs = `
+  apt-get() { :; }
 atlas() { :; }
 jq() { :; }
 mongosh() { :; }
@@ -57,10 +57,12 @@ curl() { cp "$GITHUB_ARCHIVE_FIXTURE" "$archive_path"; }
   }
 }
 
-test('track setup downloads the pinned public source without Docker or credentials', () => {
+test('Ubuntu setup installs tools and downloads the pinned public source without Docker or credentials', () => {
   const { result } = runSetup();
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /runtime files downloaded from public revision/);
+  assert.match(setup, /apt-get install -y -qq ca-certificates curl gnupg jq tar/);
+  assert.match(setup, /mongodb-atlas-cli mongodb-mongosh/);
   assert.match(setup, /https:\/\/codeload\.github\.com\/unai-ss\/atlas-stream-processor-playground\/tar\.gz/);
   assert.match(setup, /source_revision="[a-f0-9]{40}"/);
   assert.doesNotMatch(setup, /git clone|docker run|docker pull|INSTRUQT_GITHUB_READ_TOKEN/);
@@ -77,25 +79,4 @@ test('track setup installs only required runtime files from the downloaded archi
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(installedFiles, runtimeFiles);
   assert.equal(installedSecret, false);
-});
-
-test('image bundle contains only tool preparation, not runtime source or secrets', () => {
-  const root = mkdtempSync(path.join(tmpdir(), 'asp-bundle-test-'));
-  try {
-    const archive = path.join(root, 'runtime.tar.gz');
-    const packaged = spawnSync('bash', [path.join(sourceRoot, 'image/package-runtime'), archive], { encoding: 'utf8' });
-    assert.equal(packaged.status, 0, packaged.stderr);
-    const listing = spawnSync('tar', ['-tzf', archive], { encoding: 'utf8' });
-    assert.equal(listing.status, 0, listing.stderr);
-    const entries = listing.stdout.trim().split('\n').filter(Boolean);
-    assert.deepEqual(entries, ['image/prepare-host']);
-    assert.doesNotMatch(listing.stdout, /(^|\/)secret$|\.env|\.git\//m);
-    assert.doesNotMatch(listing.stdout, /projects\/|tracks\/|scripts\//);
-    assert.doesNotMatch(imagePreparation, /docker pull|docker run|git clone/);
-    const repeated = spawnSync('bash', [path.join(sourceRoot, 'image/package-runtime'), archive], { encoding: 'utf8' });
-    assert.equal(repeated.status, 1);
-    assert.match(repeated.stderr, /Refusing to overwrite/);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
 });

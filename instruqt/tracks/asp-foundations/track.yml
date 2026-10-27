@@ -10,6 +10,7 @@ tags:
 - stream-processing
 - atlas
 owner: mongodb-ts-dev
+developers: []
 idle_timeout: 300
 timelimit: 1200
 lab_config:
@@ -18,5 +19,5 @@ lab_config:
   feedback_tab_enabled: false
   loadingMessages: true
   hideStopButton: false
-checksum: "12220259635226664378"
+checksum: "4625726126570535312"
 enhanced_loading: false
