@@ -1,15 +1,13 @@
 RECOMENDACIONES PARA PUBLICAR EL TRACK DE INSTRUQT
 
 Track: asp-foundations
-Host image: mongodb-ts-dev/asp-foundations-cli-v1
+Host image: mongodb-ts-dev/instruqt-mongodb-1024
 Host: workstation
 
-1. Construir la Host image
-En Instruqt, abrir mongodb-ts-dev > Settings > Host images > Create image.
-Nombre: asp-foundations-cli-v1. Base: instruqt-ubuntu-22-04-base.
-Desde la terminal del builder desechable, obtener image/prepare-host de una
-revision revisada del repo publico y ejecutarlo como root. No iniciar Atlas ni
-guardar credenciales o datos en la imagen.
+1. Comprobar la Host image existente
+Verificar que mongodb-ts-dev/instruqt-mongodb-1024 contiene atlas, mongosh, jq,
+curl y tar. setup-workstation falla con un mensaje claro si falta alguna
+dependencia.
 
 2. Validar el runtime
 Desde la raiz del repositorio ejecutar:
@@ -17,10 +15,12 @@ Desde la raiz del repositorio ejecutar:
   node --test instruqt/image/test-runtime.mjs
   instruqt track validate
 
-La imagen preinstala Atlas CLI, mongosh, jq, curl y tar. El setup de cada
+La imagen debe preinstalar Atlas CLI, mongosh, jq, curl y tar. El setup de cada
 sandbox verifica las herramientas y descarga por HTTPS solo los archivos
 runtime permitidos desde el commit publico fijado en setup-workstation.
-Actualizar ese SHA cuando se publique una revision revisada del runtime.
+Actualizar ese SHA cuando se publique una revision revisada del runtime. Si
+falta alguna herramienta, crear una imagen basada en instruqt-ubuntu-22-04-base
+con instruqt/image/prepare-host y cambiar config.yml a la nueva referencia.
 
 3. Publicar y probar
 Desde instruqt/tracks/asp-foundations:
