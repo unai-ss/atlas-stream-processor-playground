@@ -1,21 +1,28 @@
 RECOMENDACIONES PARA PUBLICAR EL TRACK DE INSTRUQT
 
 Track: asp-foundations
-Imagen publica: ubuntu-os-cloud/ubuntu-2204-lts
+Host image: mongodb-ts-dev/asp-foundations-cli-v1
 Host: workstation
 
-1. Validar el runtime
+1. Construir la Host image
+En Instruqt, abrir mongodb-ts-dev > Settings > Host images > Create image.
+Nombre: asp-foundations-cli-v1. Base: instruqt-ubuntu-22-04-base.
+Desde la terminal del builder desechable, obtener image/prepare-host de una
+revision revisada del repo publico y ejecutarlo como root. No iniciar Atlas ni
+guardar credenciales o datos en la imagen.
+
+2. Validar el runtime
 Desde la raiz del repositorio ejecutar:
 
   node --test instruqt/image/test-runtime.mjs
   instruqt track validate
 
-El setup instala Atlas CLI, mongosh, jq, curl y tar en el sandbox. Luego
-descarga por HTTPS los archivos runtime permitidos desde el commit publico
-fijado en setup-workstation. Actualizar ese SHA cuando se publique una revision
-revisada del runtime.
+La imagen preinstala Atlas CLI, mongosh, jq, curl y tar. El setup de cada
+sandbox verifica las herramientas y descarga por HTTPS solo los archivos
+runtime permitidos desde el commit publico fijado en setup-workstation.
+Actualizar ese SHA cuando se publique una revision revisada del runtime.
 
-2. Publicar y probar
+3. Publicar y probar
 Desde instruqt/tracks/asp-foundations:
 
   instruqt track push
@@ -26,11 +33,12 @@ ademas una prueba real con un proyecto Atlas dedicado y limpiar solo los
 recursos creados para esa prueba. No habilitar hot starts hasta medir el flujo
 completo.
 
-3. Seguridad y operacion
+4. Seguridad y operacion
 Mantener las URIs Atlas en el archivo temporal por sandbox. No copiar .env,
 secretos, perfiles Atlas ni datos de alumnos al repositorio o a la imagen.
 La track no necesita Docker, Kafka, certificados TLS de sandbox ni ingress.
-El sandbox necesita salida HTTPS a los repositorios de paquetes, GitHub y Atlas.
+El builder necesita salida HTTPS a los repositorios de paquetes. El sandbox
+necesita salida HTTPS a GitHub y Atlas.
 Los recursos Atlas no se borran automaticamente al terminar el sandbox.
 
 Documentacion completa: instruqt/image/README.md.
